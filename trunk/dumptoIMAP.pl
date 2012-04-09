@@ -1,6 +1,21 @@
 #!/usr/bin/perl
 
-#  $Header: /mhub4/sources/imap-tools/dumptoIMAP.pl,v 1.4 2012/02/09 15:34:55 rick Exp $
+#  $Header: /mhub4/sources/imap-tools/dumptoIMAP.pl,v 1.5 2012/03/29 16:48:10 rick Exp $
+
+#######################################################################
+#  dumptoIMAP.pl is used to load the mailboxes and messages exported  #
+#  from an IMAP server by the imapdump.pl script.  See usage() notes  #
+#  for a list of the arguments used to run it.                        #
+#                                                                     #
+#  If you ran imapdump.pl -S host/user/pwd -f /tmp/BACKUP             #
+#  then you could restore all of the mailboxes & messages with the    #
+#  following command:                                                 #
+#                                                                     #
+#  ./dumptoIMAP.pl -S host/user/pwd -D /tmp/BACKUP                    #
+#                                                                     #
+#  If you wanted to restore just the INBOX and the Sent mailboxes you #
+#  would add -m "INBOX,Sent"                                          #
+#######################################################################
 
 use Socket;
 use IO::Socket;
@@ -12,45 +27,60 @@ use Getopt::Std;
 init();
 
 connectToHost($imapHost, \$conn);
+
 unless ( login($imapUser,$imapPwd, $conn) ) {
     Log("Check your username and password");
     print STDOUT "Login failed: Check your username and password\n";
     exit;
 }
 
-Log("Copying messages from $dir to $mbx folder on the IMAP server");
-get_messages( $dir, \@msgs );
-foreach $_ ( @msgs ) {
-   my $msg; my $date;
-   Log("Opening $_");
-   unless ( open(F, "<$_") ) {
-      Log("Error opening $_: $!");
-      next;
-   }
-   Log("Opened $_ successfully");
-   while( <F> ) {
-      Log("Reading line $_");
-      if ( /^Date: (.+)/ )  {
-         $date = $1 unless $date;
-         $date =~ s/\r|\m//g;
-         chomp $date;
-      }
-      $msg .= $_;
-   }
-   close F;
-   $size = length( $msg );
-   Log("The message is $size bytes");
-   Log("contents of msg file");
-   Log("$msg") if $debug;
- 
-   if ( $size == 0 ) {
-      Log("The message file is empty");
-      next;
-   }
-   $copied++ if insertMsg($mbx, \$msg, '', $date, $conn);
-exit;
+namespace( $conn, \$prefix, \$delim, $opt_x );
+get_mbx_list( $dir, \@mbxs );
 
-   if ( $copied/100 == int($copied/100)) { Log("$copied messages copied "); }
+foreach $mbx ( @mbxs ) {
+   Log("Copying messages from $dir/$mbx to $mbx folder on the IMAP server");
+   get_messages( "$dir/$mbx", \@msgs );
+   $n = scalar @msgs;
+   Log("$mbx has $n messages");
+   foreach $_ ( @msgs ) {
+      next unless $_;
+      my $msg; my $date;
+      Log("Opening $_") if $debug;
+      unless ( open(F, "<$_") ) {
+         Log("Error opening $_: $!");
+         next;
+      }
+      Log("Opened $_ successfully") if $debug;
+      while( <F> ) {
+         Log("Reading line $_") if $debug;
+         if ( /^Date: (.+)/ )  {
+            $date = $1 unless $date;
+            $date =~ s/\r|\m//g;
+            chomp $date;
+         }
+         $msg .= $_;
+      }
+      close F;
+   
+      $size = length( $msg );
+      Log("The message is $size bytes") if $debug;
+      Log("$msg") if $debug;
+ 
+      if ( $size == 0 ) {
+         Log("The message file is empty") if $debug;
+         next;
+      }
+
+      if ( $prefix or $delim ne '/' ) {
+         #  Need to adjust the mailbox name
+         $mbx = $prefix . $mbx unless $mbx =~ /^INBOX/i;
+         $mbx =~ s/\//$delim/g;
+      }
+
+      $copied++ if insertMsg($mbx, \$msg, '', $date, $conn);
+
+      if ( $copied/100 == int($copied/100)) { Log("$copied messages copied "); }
+   }
 
 }
 
@@ -62,11 +92,11 @@ exit;
 
 sub init {
 
-   if ( !getopts('m:L:i:dD:Ix:') ) {
+   if ( !getopts('m:L:i:dD:Ix:R') ) {
       usage();
    }
 
-   $mbx      = $opt_m;
+   $mbx_list = $opt_m;
    $dir      = $opt_D;
    $logfile  = $opt_L;
    $extension = $opt_x;
@@ -95,9 +125,9 @@ sub init {
 sub usage {
 
    print "Usage: dumptoIMAP.pl\n";
-   print "    -D <path to message files>\n";
-   print "    -m <name of IMAP mailbox to put messages into>\n";
+   print "    -D <path to the mailboxes>\n";
    print "    -i <server/username/password>\n";
+   print "    [-m <mbx1,mbx2,..,mbxn> copy only the listed mailboxes]\n";
    print "    [-x <extension> Import only files with this extension\n";
    print "    [-L <logfile>]\n";
    print "    [-d debug]\n";
@@ -313,8 +343,6 @@ my ($lsn,$lenx);
    Log("   Inserting message") if $debug;
    $lenx = length($$message);
 
-print STDERR "lenx $lenx\n";
-
    if ( $debug ) {
       Log("$$message");
    }
@@ -505,5 +533,251 @@ my $mode;
     }
 
    return $mode;
+}
+
+sub get_mbx_list {
+
+my $dir = shift;
+my $mbxs = shift;
+my %MBXS;
+
+   if ( $mbx_list ) {
+      #  The user has supplied a list of mailboxes.
+      @$mbxs = split(/,/, $mbx_list );
+      return;
+   }
+
+   @dirs = ();
+   push( @dirs, $dir );
+   @messages = ();
+   find( \&findMsgs, @dirs );   #  Returns @messages
+   foreach $fn ( @messages ) {
+      $fn =~ s/$dir//;
+      $i = rindex($fn,'/');
+      my $mbx = substr($fn,1,$i);
+      $mbx =~ s/\/$//;
+      push( @$mbxs, $mbx ) if !$MBXS{"$mbx"};
+      $MBXS{"$mbx"} = 1;
+   }
+}
+
+sub findMsgs {
+
+   return if not -f;
+
+   my $fn = $File::Find::name;
+   push( @messages, $fn );
+
+}
+
+sub namespace {
+
+my $conn      = shift;
+my $prefix    = shift;
+my $delimiter = shift;
+my $mbx_delim = shift;
+
+   #  Query the server with NAMESPACE so we can determine its
+   #  mailbox prefix (if any) and hierachy delimiter.
+
+   if ( $mbx_delim ) {
+      #  The user has supplied a mbx delimiter and optionally a prefix.
+      Log("Using user-supplied mailbox hierarchy delimiter $mbx_delim");
+      ($$delimiter,$$prefix) = split(/\s+/, $mbx_delim);
+      return;
+   }
+
+   @response = ();
+   sendCommand( $conn, "1 NAMESPACE");
+   while ( 1 ) {
+      readResponse( $conn );
+      if ( $response =~ /^1 OK/i ) {
+         last;
+      } elsif ( $response =~ /^1 NO|^1 BAD|^\* BYE/i ) {
+         Log("Unexpected response to NAMESPACE command: $response");
+         last;
+      }
+   }
+
+   foreach $_ ( @response ) {
+      if ( /NAMESPACE/i ) {
+         my $i = index( $_, '((' );
+         my $j = index( $_, '))' );
+         my $val = substr($_,$i+2,$j-$i-3);
+         ($val) = split(/\)/, $val);
+         ($$prefix,$$delimiter) = split( / /, $val );
+         $$prefix    =~ s/"//g;
+         $$delimiter =~ s/"//g;
+      
+         #  Experimental
+         if ( $public_mbxs ) {
+            #  Figure out the public mailbox settings
+            /\(\((.+)\)\)\s+\(\((.+)\s+\(\((.+)\)\)/;
+            $public = $3;
+            $public =~ /"(.+)"\s+"(.+)"/;
+            $src_public_prefix = $1 if $conn eq $src;
+            $src_public_delim  = $2 if $conn eq $src;
+            $dst_public_prefix = $1 if $conn eq $dst;
+            $dst_public_delim  = $2 if $conn eq $dst;
+         }
+         last;
+      }
+      last if /^1 NO|^1 BAD|^\* BYE/;
+   }
+
+   unless ( $$delimiter ) {
+      #  NAMESPACE command is not supported by the server
+      #  so we will have to figure it out another way.
+      $delim = getDelimiter( $conn );
+      $$delimiter = $delim;
+      $$prefix = '';
+   }
+
+   if ( $debug ) {
+      Log("prefix  >$$prefix<");
+      Log("delim   >$$delimiter<");
+   }
+}
+
+sub mailboxName {
+
+my $srcmbx    = shift;
+my $srcPrefix = shift;
+my $srcDelim  = shift;
+my $dstPrefix = shift;
+my $dstDelim  = shift;
+my $dstmbx;
+my $substChar = '_';
+
+   if ( $public_mbxs ) {
+      my ($public_src,$public_dst) = split(/:/, $public_mbxs );
+      #  If the mailbox starts with the public mailbox prefix then
+      #  map it to the public mailbox destination prefix
+
+      if ( $srcmbx =~ /^$public_src/ ) {
+         Log("src: $srcmbx is a public mailbox") if $debug;
+         $dstmbx = $srcmbx;
+         $dstmbx =~ s/$public_src/$public_dst/;
+         Log("dst: $dstmbx") if $debug;
+         return $dstmbx;
+      }
+   }
+
+   #  Change the mailbox name if the user has supplied mapping rules.
+
+   if ( $mbx_map{"$srcmbx"} ) {
+      $srcmbx = $mbx_map{"$srcmbx"} 
+   }
+
+   #  Adjust the mailbox name if the source and destination server
+   #  have different mailbox prefixes or hierarchy delimiters.
+
+   if ( ($srcmbx =~ /[$dstDelim]/) and ($dstDelim ne $srcDelim) ) {
+      #  The mailbox name has a character that is used on the destination
+      #  as a mailbox hierarchy delimiter.  We have to replace it.
+      $srcmbx =~ s^[$dstDelim]^$substChar^g;
+   }
+
+   if ( $debug ) {
+      Log("src mbx      $srcmbx");
+      Log("src prefix   $srcPrefix");
+      Log("src delim    $srcDelim");
+      Log("dst prefix   $dstPrefix");
+      Log("dst delim    $dstDelim");
+   }
+
+   $srcmbx =~ s/^$srcPrefix//;
+   $srcmbx =~ s/\\$srcDelim/\//g;
+ 
+   if ( ($srcPrefix eq $dstPrefix) and ($srcDelim eq $dstDelim) ) {
+      #  No adjustments necessary
+      # $dstmbx = $srcmbx;
+      if ( lc( $srcmbx ) eq 'inbox' ) {
+         $dstmbx = $srcmbx;
+      } else {
+         $dstmbx = $srcPrefix . $srcmbx;
+      }
+      if ( $root_mbx ) {
+         #  Put folders under a 'root' folder on the dst
+         $dstmbx =~ s/^$dstPrefix//;
+         $dstDelim =~ s/\./\\./g;
+         $dstmbx =~ s/^$dstDelim//;
+         $dstmbx = $dstPrefix . $root_mbx . $dstDelim . $dstmbx;
+         if ( uc($srcmbx) eq 'INBOX' ) {
+            #  Special case for the INBOX
+            $dstmbx =~ s/INBOX$//i;
+            $dstmbx =~ s/$dstDelim$//;
+         }
+         $dstmbx =~ s/\\//g;
+      }
+      return $dstmbx;
+   }
+
+   $srcmbx =~ s#^$srcPrefix##;
+   $dstmbx = $srcmbx;
+
+   if ( $srcDelim ne $dstDelim ) {
+       #  Need to substitute the dst's hierarchy delimiter for the src's one
+       $srcDelim = '\\' . $srcDelim if $srcDelim eq '.';
+       $dstDelim = "\\" . $dstDelim if $dstDelim eq '.';
+       $dstmbx =~ s#$srcDelim#$dstDelim#g;
+       $dstmbx =~ s/\\//g;
+   }
+   if ( $srcPrefix ne $dstPrefix ) {
+       #  Replace the source prefix with the dest prefix
+       $dstmbx =~ s#^$srcPrefix## if $srcPrefix;
+       if ( $dstPrefix ) {
+          $dstmbx = "$dstPrefix$dstmbx" unless uc($srcmbx) eq 'INBOX';
+       }
+       $dstDelim = "\\$dstDelim" if $dstDelim eq '.';
+       $dstmbx =~ s#^$dstDelim##;
+   } 
+      
+   if ( $root_mbx ) {
+      #  Put folders under a 'root' folder on the dst
+      $dstDelim =~ s/\./\\./g;
+      $dstmbx =~ s/^$dstPrefix//;
+      $dstmbx =~ s/^$dstDelim//;
+      $dstmbx = $dstPrefix . $root_mbx . $dstDelim . $dstmbx;
+      if ( uc($srcmbx) eq 'INBOX' ) {
+         #  Special case for the INBOX
+         $dstmbx =~ s/INBOX$//i;
+         $dstmbx =~ s/$dstDelim$//;
+      }
+      $dstmbx =~ s/\\//g;
+   }
+
+   return $dstmbx;
+}
+
+sub getDelimiter  {
+
+my $conn = shift;
+my $delimiter;
+
+   #  Issue a 'LIST "" ""' command to find out what the
+   #  mailbox hierarchy delimiter is.
+
+   sendCommand ($conn, '1 LIST "" ""');
+   @response = '';
+   while ( 1 ) {
+	readResponse ($conn);
+	if ( $response =~ /^1 OK/i ) {
+		last;
+	}
+	elsif ( $response !~ /^\*/ ) {
+		Log ("unexpected response: $response");
+		return 0;
+	}
+   }
+
+   for $i (0 .. $#response) {
+        $response[$i] =~ s/\s+/ /;
+        if ( $response[$i] =~ /\* LIST \((.*)\) "(.*)" "(.*)"/i ) {
+           $delimiter = $2;
+        }
+   }
+
+   return $delimiter;
 }
 
