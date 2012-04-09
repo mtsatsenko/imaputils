@@ -1,0 +1,16 @@
+Installing imaputils
+==========================
+
+System Requirements
+-------------------
+
+* Perl v5.8 or newer
+* Optional modules IO::Socket::SSL and Unicode::IMAPUtf7
+
+Quick Install
+-------------
+
+   perl Makefile.PL
+   make
+   make test
+   make install
