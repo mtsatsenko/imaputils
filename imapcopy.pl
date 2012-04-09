@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# $Header: /mhub4/sources/imap-tools/imapcopy.pl,v 1.45 2012/03/15 12:35:11 rick Exp $
+# $Header: /mhub4/sources/imap-tools/imapcopy.pl,v 1.47 2012/03/29 15:11:05 rick Exp $
 
 #######################################################################
 #   Program name    imapcopy.pl                                       #
@@ -75,6 +75,12 @@ use IO::Socket;
            Log("$line");
         }
         $dstmbx = mailboxName( $srcmbx,$srcPrefix,$srcDelim,$dstPrefix,$dstDelim );
+        $dstmbx =~ s/\s+$//g;
+
+        #  Special for issue with Exchange IMAP which doesn't like
+        #  trailing spaces in mailbox names.
+        $dstmbx =~ s/\s+\//\//g;
+
         $LAST = "$dstmbx";
         createMbx( $dstmbx, $dst ) unless mbxExists( $dstmbx, $dst);
 
@@ -89,6 +95,7 @@ use IO::Socket;
         selectMbx( $dstmbx, $dst );
 
         if ( $update ) {
+           Log("Get msgids on the destination") if $debug;
            getMsgIdList( $dstmbx, \%DST_MSGS, $dst );
         }
 
@@ -96,14 +103,23 @@ use IO::Socket;
 
         $checkpoint  = "$srcmbx|$sourceHost|$sourceUser|$sourcePwd|";
         $checkpoint .= "$destHost|$destUser|$destPwd";
-	
-        if ( $sent_after ) {
-           getDatedMsgList( $srcmbx, $sent_after, \@msgs, $src, 'EXAMINE' );
+
+        if ( $sent_after and $sent_before ) {
+           getDatedMsgList( $srcmbx, 'SINCE',  $sent_after,  \@msgs_since, $src );
+           getDatedMsgList( $srcmbx, 'BEFORE', $sent_before, \@msgs_before, $src );
+           date_in_range( \@msgs_since, \@msgs_before, \@msgs);
+        } elsif ( $sent_after  ) {
+           getDatedMsgList( $srcmbx, 'SINCE',  $sent_after,  \@msgs, $src );
+        } elsif ( $sent_before  ) {
+           getDatedMsgList( $srcmbx, 'BEFORE', $sent_before, \@msgs, $src );
         } else {
-           getMsgList( $srcmbx, \@msgs, $src, 'EXAMINE' );
+           getMsgList( $srcmbx, \@msgs, $src );
         }
 
         my $msgcount = $#msgs + 1;
+        if ( $sent_after and $sent_before ) {
+           Log("There are $msgcount messages between those dates");
+        }
         Log("   Copying $msgcount messages in $srcmbx mailbox") if $verbose;
         if ( $msgcount == 0 ) {
            Log("   $srcmbx mailbox is empty");
@@ -120,6 +136,7 @@ use IO::Socket;
            if ( $update ) {
               #  Don't insert the message if it already exists
               next if $DST_MSGS{"$msgid"};
+              Log("$msgid does not exist on the destination") if $debug;
            }
 
            #  Strip off TZ offset if it exists
@@ -265,6 +282,10 @@ my $fd = shift;
     $response =~ s/\r//g;
     push (@response,$response);
     Log ("<< $response") if $showIMAP;
+
+    if ( $response =~ /server unavailable|connection closed/i ) {
+       resume();
+    }
 }
 
 #
@@ -772,8 +793,15 @@ my $msgid;
            $date =~ s/"//g;
         }
 
-        if ( $response[$i] =~ /^Message-Id: (.+)/i ) {
+        if ( $response[$i] =~ /^Message-Id:/i ) {
+           $response[$i] =~ /^Message-Id: (.+)/i;
            $msgid = $1;
+           trim(*msgid);
+           if ( $msgid eq '' ) {
+              # Line-wrap, get it from the next line
+              $msgid = $response[$i+1];
+              trim(*msgid);
+           }
         }
 
         # if ( $response[$i] =~ /\* (.+) [^FETCH]/ ) {
@@ -797,23 +825,24 @@ my $msgid;
 #  Get a list of the user's messages in a mailbox on
 #  the host which were sent after the specified date
 #
+
 sub getDatedMsgList {
 
 my $mailbox = shift;
+my $operator = shift;
 my $cutoff_date = shift;
 my $msgs    = shift;
 my $conn    = shift;
-my $oper    = shift;
 my ($seen, $empty, @list,$msgid);
 
     #  Get a list of messages sent after the specified date
 
-    Log("Searching for messages after $cutoff_date");
+    Log("Searching for messages $operator $cutoff_date");
 
     @list  = ();
     @$msgs = ();
 
-    sendCommand ($conn, "1 $oper \"$mailbox\"");
+    sendCommand ($conn, "1 EXAMINE \"$mailbox\"");
     while ( 1 ) {
         readResponse ($conn);
         if ( $response =~ / EXISTS/i) {
@@ -822,10 +851,10 @@ my ($seen, $empty, @list,$msgid);
         } elsif ( $response =~ /^1 OK/i ) {
             last;
         } elsif ( $response =~ /^1 NO/i ) {
-            Log ("unexpected SELECT response: $response");
+            Log ("unexpected response: $response");
             return 0;
         } elsif ( $response !~ /^\*/ ) {
-            Log ("unexpected SELECT response: $response");
+            Log ("unexpected response: $response");
             return 0;
         }
     }
@@ -833,11 +862,11 @@ my ($seen, $empty, @list,$msgid);
     my ($date,$ts) = split(/\s+/, $cutoff_date);
 
     #
-    #  Get list of messages sent before the reference date
+    #  Get list of messages sent before/after the reference date
     #
-    Log("Get messages sent after $date") if $debug;
+    Log("Get messages sent $operator $date") if $debug;
     $nums = "";
-    sendCommand ($conn, "1 SEARCH SINCE \"$date\"");
+    sendCommand ($conn, "1 SEARCH $operator \"$date\"");
     while ( 1 ) {
 	readResponse ($conn);
 	if ( $response =~ /^1 OK/i ) {
@@ -876,7 +905,6 @@ for $num (@msgList) {
      undef @response;
      while ( 1 ) {
 	readResponse   ( $conn );
-        Log("RESP1 $response");
 	if   ( $response =~ /^1 OK/i ) {
 		last;
 	}   
@@ -911,7 +939,7 @@ for $num (@msgList) {
              ($msgnum) = split(/\s+/, $1);
           }
 
-          if ( $msgnum and $date ) {
+          if ( $msgnum and $date and $msgid ) {
              push (@$msgs,"$msgnum|$date|$flags|$msgid");
              $msgnum=$msgid=$date=$flags='';
           }
@@ -923,6 +951,30 @@ for $num (@msgList) {
    }
 
    return 1;
+}
+
+sub date_in_range {
+
+my $list1 = shift;
+my $list2 = shift;
+my $newlist = shift;
+my %MSGNUMS;
+
+   #  Return a list of msgnums common to both lists passed
+   #  to us.
+
+   @$newlist = ();
+
+   foreach $_ ( @$list1 ) {
+      my ($msgnum) = split(/\|/, $_);
+      $MSGNUMS{$msgnum} = $_;
+   }
+
+   foreach $_ ( @$list2 ) {
+      my ($msgnum) = split(/\|/, $_);
+      push( @$newlist, $_ ) if $MSGNUMS{$msgnum};
+   }
+      
 }
 
 sub mbxExists {
@@ -1031,6 +1083,7 @@ sub usage {
    print STDOUT "          -t <timeout in seconds>\n";
    print STDOUT "          -T copy custom flags (eg, \$Label1,\$MDNSent,etc)\n";
    print STDOUT "          -a <DD-MMM-YYYY> copy only messages after this date\n";
+   print STDOUT "          -b <DD-MMM-YYYY> copy only messages before this date\n";
    print STDOUT "          -X <megabytes> Skip any message exceeding this size\n";
    print STDOUT "          -U update mode, don't copy messages that already exist\n";
    print STDOUT "          -B <msgnum>  Starting point for message fetch\n";
@@ -1041,7 +1094,7 @@ sub usage {
 
 sub processArgs {
 
-   if ( !getopts( "dS:D:L:m:hIp:M:rqx:y:e:Rt:Tia:X:vP:A:UB:E:" ) ) {
+   if ( !getopts( "dS:D:L:m:hIp:M:rqx:y:e:Rt:Tia:b:X:vP:A:UB:E:" ) ) {
       usage();
    }
    if ( $opt_S =~ /\\/ ) {
@@ -1072,6 +1125,7 @@ sub processArgs {
    $mbx_map_fn  = $opt_M;
    $excludeMbxs = $opt_e;
    $sent_after  = $opt_a;
+   $sent_before = $opt_b;
    $max_size    = $opt_X;
    $public_mbxs = $opt_P;
    $archive_mbx = $opt_A;
@@ -1081,7 +1135,8 @@ sub processArgs {
 
    Log("Running in update mode") if $update;
 
-   validate_date( $sent_after ) if $sent_after;
+   validate_date( $sent_after )  if $sent_after;
+   validate_date( $sent_before ) if $sent_before;
    usage() if $opt_h;
 
 }
@@ -1698,7 +1753,7 @@ sub resume {
    # Log("checkpoint $checkpoint");
    Log("LAST $LAST");
    my ($mbx,$msgnum) = split(/\|/, $LAST);
-Log("mbx $mbx");
+   Log("mbx $mbx");
    Log("Disconnect from the source and destination servers");
 
    close $src;
@@ -1787,8 +1842,16 @@ my $msgid;
 
        last if /OK FETCH complete/;
 
-       if ($response[$i] =~ /Message-ID: (.+)/i) {
-          $$msgids{"$1"} = 1;
+       if ($response[$i] =~ /Message-ID:/i) {
+          $response[$i] =~ /Message-Id: (.+)/i;
+          $msgid = $1;
+          trim(*msgid);
+          if ( $msgid eq '' ) {
+             # Line-wrap, get it from the next line
+             $msgid = $response[$i+1];
+             trim(*msgid);
+          }
+          $$msgids{"$msgid"} = 1;
        }
    }
 
