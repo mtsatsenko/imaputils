@@ -614,8 +614,8 @@ my $msgid  = shift;
 
 sub usage {
 
-   print STDOUT "\nusage:";
-   print STDOUT "IMAPtoMbox.pl -i Host/User/Password -m <dir> [-M] [-d] [-I] [-o <user>] [-g group] \n";
+   print STDOUT "usage:";
+   print STDOUT "iu-imaptombox -i Host/User/Password -m <dir> [-M] [-d] [-I] [-o <user>] [-g group] \n";
    print STDOUT "\n Optional arguments:\n";
    print STDOUT "    -M IMAP mailbox list (eg \"Inbox, Drafts, Notes\". Default all mailboxes)\n";
    print STDOUT "    -o <user>  sets ownership of mailfile\n";

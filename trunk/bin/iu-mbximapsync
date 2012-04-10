@@ -123,7 +123,7 @@ sub init {
 
 sub usage {
 
-   print "Usage: mbxIMAPsync.pl\n";
+   print "Usage: iu-mbximapsync\n";
    print "    -f <location of mailfiles>\n";
    print "    -i imapHost/imapUser/imapPassword\n";
    print "    -m <IMAP mailbox>\n";

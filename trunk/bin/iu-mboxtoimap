@@ -218,7 +218,7 @@ my @mailfiles;
 
 sub usage {
 
-   print "Usage: MboxtoIMAP.pl\n";
+   print "Usage: iu-mboxtoimap\n";
    print "    -m <location of mailfiles>\n";
    print "    -f <file spec of individual mailfile>\n";
    print "    -n <mailbox name> Used with -f <mailfile>\n";

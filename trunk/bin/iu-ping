@@ -294,7 +294,7 @@ my $conn = shift;
   
 sub usage {
 
-   print STDOUT "\nUsage: imapPing.pl <args> \n\n";
+   print STDOUT "\nUsage: iu-ping <args> \n\n";
    print STDOUT "   -h   <hostname>\n";
    print STDOUT "   -u   <user>\n"; 
    print STDOUT "   -p   <password>\n";

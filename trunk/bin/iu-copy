@@ -1063,7 +1063,7 @@ if ( $response eq '' ) {
 sub usage {
 
    print STDOUT "usage:\n";
-   print STDOUT " imapcopy -S sourceHost/sourceUser/sourcePassword [/CRAM-MD5]\n";
+   print STDOUT " iu-copy  -S sourceHost/sourceUser/sourcePassword [/CRAM-MD5]\n";
    print STDOUT "          -D destHost/destUser/destPassword [/CRAM-MD5]\n";
    print STDOUT "          -d debug\n";
    print STDOUT "          -I show IMAP protocol exchanges\n";

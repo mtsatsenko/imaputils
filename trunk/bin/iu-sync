@@ -796,7 +796,7 @@ my $flags;
 sub usage {
 
    print STDOUT "usage:\n";
-   print STDOUT " imapsync -S sourceHost/sourceUser/sourcePassword\n";
+   print STDOUT " iu-sync -S sourceHost/sourceUser/sourcePassword\n";
    print STDOUT "          -D destHost/destUser/destPassword\n";
    print STDOUT "          -d debug\n";
    print STDOUT "          -L logfile\n";

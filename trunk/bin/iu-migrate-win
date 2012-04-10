@@ -643,7 +643,7 @@ my $message;
 sub usage {
 
    print STDOUT "usage:\n";
-   print STDOUT " imapcopy -S sourceHost/sourceUser/sourcePassword\n";
+   print STDOUT " iu-migrate-win -S sourceHost/sourceUser/sourcePassword\n";
    print STDOUT "          -D destHost/destUser/destPassword\n";
    print STDOUT "          -d debug\n";
    print STDOUT "          -L logfile\n";

@@ -134,7 +134,7 @@ sub getArgs {
 
 sub usage {
 
-   print STDOUT "usage:  imapCapability.pl -h <host> -u <user> -p <password>\n";
+   print STDOUT "usage: iu-capabilities -h <host> -u <user> -p <password>\n";
    print STDOUT "     Option argument:  -m  (list mailboxes)\n";
    exit;
 

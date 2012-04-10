@@ -708,7 +708,7 @@ my $message;
 sub usage {
 
    print STDOUT "usage:\n";
-   print STDOUT " imapdump.pl -S Host/User/Password -f <dir>\n";
+   print STDOUT " iu-dump -S Host/User/Password -f <dir>\n";
    print STDOUT " <dir> is the file directory to write the message structure\n";
    print STDOUT " Optional arguments:\n";
    print STDOUT "          -F <flags>  (eg dump only messages with specified flags\n";

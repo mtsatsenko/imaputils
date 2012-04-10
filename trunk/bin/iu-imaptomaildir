@@ -721,7 +721,7 @@ my $message;
 sub usage {
 
    print STDOUT "usage:\n";
-   print STDOUT " imap_to_maildir.pl -S Host/User/Password -u <user> -M <maildir>\n";
+   print STDOUT " iu-imaptomaildir -S Host/User/Password -u <user> -M <maildir>\n";
    print STDOUT " <dir> is the file directory to write the message structure\n";
    print STDOUT " Optional arguments:\n";
    print STDOUT "          -d debug\n";

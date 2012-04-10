@@ -608,7 +608,7 @@ my $message = shift;
 sub usage {
 
    print STDOUT "usage:\n";
-   print STDOUT " deldups -S host/user/password\n";
+   print STDOUT " iu-deldups -S host/user/password\n";
    print STDOUT " Optional arguments:\n";
    print STDOUT "          -p purge duplicate messages\n";
    print STDOUT "          -M <mailbox to put duplicates into>\n";

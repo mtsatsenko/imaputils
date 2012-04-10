@@ -677,7 +677,7 @@ sub summary {
 sub usage {
 
    print "\n";
-   print "pop3toimap.pl usage:\n";
+   print "iu-pop3toimap usage:\n";
    print "   -p <POP3 host/user/password>\n";
    print "   -i <IMAP host/user/password>\n";
    print "   -u <input file>\n";

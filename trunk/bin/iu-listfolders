@@ -821,26 +821,7 @@ my $message;
 sub usage {
 
    print STDOUT "usage:\n";
-   print STDOUT " imapcopy -S sourceHost/sourceUser/sourcePassword [/CRAM-MD5]\n";
-   print STDOUT "          -D destHost/destUser/destPassword [/CRAM-MD5]\n";
-   print STDOUT "          -d debug\n";
-   print STDOUT "          -I show IMAP protocol exchanges\n";
-   print STDOUT "          -L logfile\n";
-   print STDOUT "          -m mailbox list (eg \"Inbox, Drafts, Notes\". Default is all mailboxes)\n";
-   print STDOUT "          -R include submailboxes when used with -m\n\n";
-   print STDOUT "          -e exclude mailbox list\n";
-   print STDOUT "          -r clear \\DELETE flag from deleted messages\n";
-   print STDOUT "          -p <mailbox> put copied mailboxes under a root mailbox\n";
-   print STDOUT "          -x <mbx delimiter [mbx prefix]>  source (eg, -x '. INBOX.'\n";
-   print STDOUT "          -y <mbx delimiter [mbx prefix]>  destination\n";
-   print STDOUT "          -i initialize mailbox (remove existing messages first\n";
-   print STDOUT "          -M <file> mailbox map file. Maps src mbxs to dst mbxs. ";
-   print STDOUT "Each line in the file should be 'src mbx:dst mbx'\n";
-   print STDOUT "          -q quiet mode (still writes to the logfile)\n";
-   print STDOUT "          -t <timeout in seconds>\n";
-   print STDOUT "          -T copy custom flags (eg, \$Label1,\$MDNSent,etc)\n";
-   print STDOUT "          -a <DD-MMM-YYYY> copy only messages after this date\n";
-   print STDOUT "          -X <megabytes> Skip any message exceeding this size\n";
+   print STDOUT " iu-listfolders -S host/user/password -O <output file>\n";
    exit;
 
 }
