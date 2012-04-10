@@ -78,7 +78,7 @@ use Getopt::Std;
         }
         close M;
 
-        `chown $opt_o "$mbxfn"` if $opt_o;   # Set ownership
+        chown $owner, $group, $mbxfn if $opt_o and $opt_g;   # Set ownership
         
         $summary{"$mbx"} = $copied++; 
    }
@@ -615,10 +615,11 @@ my $msgid  = shift;
 sub usage {
 
    print STDOUT "\nusage:";
-   print STDOUT "IMAPtoMbox.pl -i Host/User/Password -m <dir> [-M] [-d] [-I] [-o <user>] \n";
+   print STDOUT "IMAPtoMbox.pl -i Host/User/Password -m <dir> [-M] [-d] [-I] [-o <user>] [-g group] \n";
    print STDOUT "\n Optional arguments:\n";
    print STDOUT "    -M IMAP mailbox list (eg \"Inbox, Drafts, Notes\". Default all mailboxes)\n";
    print STDOUT "    -o <user>  sets ownership of mailfile\n";
+   print STDOUT "    -g <group>  sets group for mailfile\n";
    print STDOUT "    -L logfile\n";
    print STDOUT "    -d debug\n";
    print STDOUT "    -I show IMAP protocal exchanges\n";
@@ -633,7 +634,7 @@ sub usage {
 #
 sub processArgs {
 
-   if ( !getopts( "di:L:m:hM:Io:nr" ) ) {
+   if ( !getopts( "di:L:m:hM:Io:g:nr" ) ) {
       &usage();
    }
 
@@ -641,7 +642,8 @@ sub processArgs {
    $mbxList  = $opt_M;
    $logfile  = $opt_L;
    $dir      = $opt_m;
-   $owner    = $opt_o;
+   $owner    = scalar getpwnam($opt_o) or -1;
+   $group    = scalar getgrnam($opt_g) or -1;
    $no_duplicates = 1 if $opt_n;
    $submbxs  = 1 if $opt_r;
    $debug    = 1 if $opt_d;
