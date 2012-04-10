@@ -500,7 +500,7 @@ my $message;
 sub usage {
 
    print STDOUT "usage:\n";
-   print STDOUT " trash.pl -S sourceHost/sourceUser/sourcePassword\n";
+   print STDOUT " iu-trash -S sourceHost/sourceUser/sourcePassword\n";
    print STDOUT " Optional arguments:\n";
    print STDOUT "    -d debug\n";
    print STDOUT "    -t <trash mailbox name>\n";

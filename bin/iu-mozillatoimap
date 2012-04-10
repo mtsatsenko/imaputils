@@ -109,7 +109,7 @@ sub init {
 
 sub usage {
 
-   print "Usage: mozillaToIMAP.pl\n";
+   print "Usage: iu-mozillatoimap\n";
    print "    -m <root location of mailfiles>\n";
    print "    -i <server/username/password>\n";
    print "    [-L <logfile>]\n";

@@ -644,7 +644,7 @@ my $message;
 
 sub usage {
 
-   print STDOUT "usage: delete_imap_mailboxes.pl\n";
+   print STDOUT "usage: iu-delmailboxes\n";
    print STDOUT "     -S imapHost/user/password\n";
    print STDOUT "     -m <mailbox regular expression>\n";
    print STDOUT "     -t test mode, show what would have been deleted\n";

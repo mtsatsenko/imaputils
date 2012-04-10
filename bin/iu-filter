@@ -610,7 +610,7 @@ my $internaldate;
 sub usage {
 
    print STDOUT "usage:\n";
-   print STDOUT " imapfilter.pl -S host/sourceUser/sourcePassword ";
+   print STDOUT " iu-filter -S host/sourceUser/sourcePassword ";
    print STDOUT "-r <rules file>\n";
    print STDOUT " Optional arguments:\n";
    print STDOUT "    -L logfile\n";

@@ -338,7 +338,7 @@ sub init {
 
 sub usage {
 
-   print "\nUsage:  migrateIMAP.pl -S sourceHost -D destinationHost\n\n";
+   print "\nUsage:  iu-migrate -S sourceHost -D destinationHost\n\n";
    print "Optional arguments:\n\n";
    print " -i <file of usernames>\n";
    print " -n <number of simultaneous migration processes to run>\n";

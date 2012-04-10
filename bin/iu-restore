@@ -124,7 +124,7 @@ sub init {
 
 sub usage {
 
-   print "Usage: dumptoIMAP.pl\n";
+   print "Usage: iu-restore\n";
    print "    -D <path to the mailboxes>\n";
    print "    -i <server/username/password>\n";
    print "    [-m <mbx1,mbx2,..,mbxn> copy only the listed mailboxes]\n";

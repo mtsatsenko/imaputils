@@ -470,7 +470,7 @@ my $message;
 sub usage {
 
    print STDOUT "usage:\n";
-   print STDOUT " purgeMbx.pl -S host/user/pwd -m <mbx>\n";
+   print STDOUT " iu-purge -S host/user/pwd -m <mbx>\n";
    print STDOUT " Optional arguments:\n";
    print STDOUT "    -d debug\n";
    print STDOUT "    -L <logfile>\n";
