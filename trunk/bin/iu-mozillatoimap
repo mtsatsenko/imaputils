@@ -7,6 +7,7 @@ use FileHandle;
 use File::Find;
 use Fcntl;
 use Getopt::Std;
+use IMAP::Utils;
 
     ######################################################################
     #  Program name   mozillaToIMAP.pl                                   #
@@ -96,10 +97,7 @@ sub init {
    ($imapHost,$imapUser,$imapPwd) = split(/\//, $opt_i);
 
    if ( $logfile ) {
-      if ( ! open (LOG, ">> $logfile") ) {
-        print "Can't open logfile $logfile: $!\n";
-        $logfile = '';
-      }
+	openLog($logfile);
    }
    Log("Starting");
 
@@ -151,28 +149,6 @@ local $_;
     close(FH);
 
     return wantarray ? @mail : \@mail;
-}
-
-
-#
-#  Print a message to STDOUT and to the logfile if
-#  the opt_L option is present.
-#
-
-sub Log {
-
-my $line = shift;
-my $msg;
-
-   ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime (time);
-   $msg = sprintf ("%.2d-%.2d-%.4d.%.2d:%.2d:%.2d %s",
-                  $mon + 1, $mday, $year + 1900, $hour, $min, $sec, $line);
-
-   if ( $logfile ) {
-      print LOG "$msg\n";
-   }
-   print STDOUT "$line\n";
-
 }
 
 #  connectToHost
