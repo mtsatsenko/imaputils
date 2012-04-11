@@ -41,6 +41,7 @@ use Socket;
 use FileHandle;
 use Fcntl;
 use IO::Socket;
+use IMAP::Utils;
 
    init();
    ($host,$user,$pwd) = getArgs(); 
