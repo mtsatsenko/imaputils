@@ -6,6 +6,7 @@ use Socket;
 use FileHandle;
 use Fcntl;
 use Getopt::Std;
+use IMAP::Utils;
 
     ######################################################################
     #  Program name   mbxIMAPsync.pl                                     #
@@ -107,10 +108,7 @@ sub init {
    $debug    = 1 if $opt_d;
 
    if ( $logfile ) {
-      if ( ! open (LOG, ">> $logfile") ) {
-        print "Can't open logfile $logfile: $!\n";
-        $logfile = '';
-      }
+      openLog($logfile);
    }
    Log("\nThis is mbxIMAPsync\n");
 
@@ -160,23 +158,6 @@ local $_;
     close(FH);
 
     return wantarray ? @mail : \@mail;
-}
-
-sub Log {
-
-my $line = shift;
-my $msg;
-
-   ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime (time);
-   $msg = sprintf ("%.2d-%.2d-%.4d.%.2d:%.2d:%.2d %s",
-                  $mon + 1, $mday, $year + 1900, $hour, $min, $sec, $line);
-
-   if ( $logfile ) {
-      print LOG "$msg\n";
-   } else {
-      print "$line\n";
-   }
-
 }
 
 #  connectToHost

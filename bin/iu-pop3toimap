@@ -31,6 +31,7 @@
 use Getopt::Std;
 use Socket;
 use IO::Socket;
+use IMAP::Utils;
 
    init();
 
@@ -164,11 +165,7 @@ sub init {
    }
 
    $logFile = "pop3toimap.log" unless $logFile;
-   if (!open(LOG, ">> $logFile")) {
-        print STDERR "Can't open logfile $logFile\n";
-	exit;
-   }
-   select(LOG); $| = 1;
+   openLog($logfile);
    Log("pop3toimap $version starting");
 
    $timeout = $opt_t;
@@ -573,31 +570,6 @@ sub alarmSet {
     if ( $nt ) {
         alarm $timeout;
     }
-}
-
-#  Log
-#
-#  This subroutine formats and writes a log message to STDOUT and to the
-#  logfile.
-#
-sub Log {
-
-my $str = shift;
-my $line;
-
-    ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime;
-    if ($year < 99) { $yr = 2000; }
-    else { $yr = 1900; }
-    $line = sprintf ("%.2d-%.2d-%d.%.2d:%.2d:%.2d %s %s\n",
-		     $mon + 1, $mday, $year + $yr, $hour, $min, $sec,$$,$str);
-
-    print LOG "$line";
-    print STDOUT "$str\n";
-    
-   if ( !$start ) {
-         $start = sprintf ("%.2d-%.2d-%d %.2d:%.2d",
-		     $mon + 1, $mday, $year + $yr, $hour, $min);
-   }
 }
 
 #  sendCommand

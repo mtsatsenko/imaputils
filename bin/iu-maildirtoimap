@@ -23,6 +23,8 @@
 #   See usage() for a list of arguments                                  #
 ##########################################################################
 
+use IMAP::Utils;
+
 init();
 $debug = 1;
 get_user_list( \@users );
@@ -180,12 +182,9 @@ require "ctime.pl";
 
    $timeout = 45 unless $timeout;
    $maxChildren = 1 unless $maxChildren;
-   $hostname = `hostname`;
 
    $logfile = "maildir_to_imap.log" unless $logfile;
-   open (LOG, ">>$logfile");
-   select LOG;
-   $| = 1;
+   openLog($logfile);
    Log("$0 starting");
 
    $date = ctime(time);
@@ -202,7 +201,7 @@ require "ctime.pl";
 
 sub usage {
 
-   print "\nUsage:  maildir_to_imap.pl -i <users> -D imapHost\n\n";
+   print "\nUsage:  iu-maildirtoimap -i <users> -D imapHost\n\n";
    print "Optional arguments:\n\n";
    print " -i <file of usernames>\n";
    print " -n <number of simultaneous migration processes to run>\n";
@@ -213,21 +212,6 @@ sub usage {
    print " -I record IMAP protocol exchanges\n\n";
    exit;
 
-}
-
-
-sub Log {
-
-my $line = shift;
-
-   if ( LOG ) {
-      my @f = localtime( time );
-      my $timestamp = sprintf( "%02d-%02d-%04d.%02d:%02d:%02d",
-			 (1 + $f[ 4 ]), $f[ 3 ], (1900 + $f[ 5 ]),
-			 @f[ 2,1,0 ] );
-      printf LOG "%s %s: %s\n", $timestamp, $$, $line;
-   }
-   #  print STDERR "$line\n";
 }
 
 #  Make a connection to an IMAP host

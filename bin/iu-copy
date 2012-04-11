@@ -32,6 +32,7 @@ use FileHandle;
 use Fcntl;
 use Getopt::Std;
 use IO::Socket;
+use IMAP::Utils;
 
 #################################################################
 #            Main program.                                      #
@@ -225,11 +226,7 @@ sub init {
    #  Open the logFile
    #
    if ( $logfile ) {
-      if ( !open(LOG, ">> $logfile")) {
-         print STDOUT "Can't open $logfile: $!\n";
-         exit;
-      } 
-      select(LOG); $| = 1;
+      &openLog($logfile);
    }
    Log("$0 starting");
 
@@ -287,32 +284,6 @@ my $fd = shift;
        resume();
     }
 }
-
-#
-#  Log
-#
-#  This subroutine formats and writes a log message to STDERR.
-#
-
-sub Log {
- 
-my $str = shift;
-
-   #  If a logfile has been specified then write the output to it
-   #  Otherwise write it to STDOUT
-
-   if ( $logfile ) {
-      ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime;
-      if ($year < 99) { $yr = 2000; }
-      else { $yr = 1900; }
-      $line = sprintf ("%.2d-%.2d-%d.%.2d:%.2d:%.2d %s\n",
-		     $mon + 1, $mday, $year + $yr, $hour, $min, $sec,$str);
-      print LOG "$line";
-   } 
-   print STDOUT "$str\n" unless $quiet_mode;
-
-}
-
 
 sub createMbx {
 

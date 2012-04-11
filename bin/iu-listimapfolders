@@ -16,6 +16,7 @@ use FileHandle;
 use Fcntl;
 use Getopt::Std;
 use IO::Socket;
+use IMAP::Utils;
 
 #################################################################
 #################################################################
@@ -63,11 +64,7 @@ sub init {
    #  Open the logFile
    #
    if ( $logfile ) {
-      if ( !open(LOG, ">> $logfile")) {
-         print STDOUT "Can't open $logfile: $!\n";
-         exit;
-      } 
-      select(LOG); $| = 1;
+      openLog($logfile);
    }
 
    #  Determine whether we have SSL support via openSSL and IO::Socket::SSL
@@ -861,13 +858,5 @@ sub usage {
 
    print STDOUT "Usage: iu-listimapfolders -S <host>/<user>/<password> [-O <output file>]\n";
    exit;
-
-}
-
-sub Log {
-
-my $str = shift;
- 
-   print STDERR "$str\n";
 
 }

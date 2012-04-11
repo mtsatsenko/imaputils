@@ -32,6 +32,7 @@ use Socket;
 use FileHandle;
 use Fcntl;
 use Getopt::Std;
+use IMAP::Utils;
 
 #################################################################
 #            Main program.                                      #
@@ -110,10 +111,7 @@ sub init {
    #  Open the logFile
    #
    if ( $logfile ) {
-      if ( !open(LOG, ">> $logfile")) {
-         print STDOUT "Can't open $logfile: $!\n";
-      } 
-      select(LOG); $| = 1;
+       &openLog($logfile);
    }
    &Log("\n$0 starting");
    &Log("arguments i = $opt_i   m = $opt_m");
@@ -124,8 +122,6 @@ sub init {
    if ( $@ ) {
       $ssl_installed = 0;
    }
-
-
 
    return $dir;
 }
@@ -163,26 +159,6 @@ local($fd) = shift @_;
     $response =~ s/\r//g;
     push (@response,$response);
     if ($showIMAP) { &Log ("<< $response",2); }
-}
-
-#
-#  Log
-#
-#  This subroutine formats and writes a log message to STDERR.
-#
-
-sub Log {
- 
-my $str = shift;
-
-   ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime;
-   if ($year < 99) { $yr = 2000; }
-   else { $yr = 1900; }
-   $line = sprintf ("%.2d-%.2d-%d.%.2d:%.2d:%.2d %s %s\n",
-	     $mon + 1, $mday, $year + $yr, $hour, $min, $sec,$$,$str);
-   print LOG "$line";
-   print STDERR "$str\n";
-
 }
 
 #  connectToHost
