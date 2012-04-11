@@ -28,6 +28,7 @@ use Fcntl;
 use Getopt::Std;
 use File::Path;
 use Time::HiRes;
+use IMAP::Utils;
 
 #################################################################
 #            Main program.                                      #
@@ -165,32 +166,6 @@ sub readResponse
     $response =~ s/\r//g;
     push (@response,$response);
     if ($showIMAP) { Log ("<< $response",2); }
-}
-
-#
-#  Log
-#
-#  This subroutine formats and writes a log message to STDERR.
-#
-
-sub Log {
- 
-my $str = shift;
-
-   #  If a logile has been specified then write the output to it
-   #  Otherwise write it to STDOUT
-
-   if ( $logfile ) {
-      ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime;
-      if ($year < 99) { $yr = 2000; }
-      else { $yr = 1900; }
-      $line = sprintf ("%.2d-%.2d-%d.%.2d:%.2d:%.2d %s %s\n",
-		     $mon + 1, $mday, $year + $yr, $hour, $min, $sec,$$,$str);
-      print LOG "$line";
-   } else {
-      print STDOUT "$str\n";
-   }
-print STDOUT "$str\n";
 }
 
 #  Make a connection to an IMAP host

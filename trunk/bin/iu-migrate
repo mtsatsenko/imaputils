@@ -19,6 +19,7 @@
 #                                                                        *
 #   Use the -h argument to see the complete list of arguments.           *
 #*************************************************************************
+use IMAP::Utils;
 
 init();
 
@@ -358,21 +359,6 @@ sub usage {
    print " -T copy custom flags (eg, \$Label1,\$MDNSent,etc)\n";
    exit;
 
-}
-
-
-sub Log {
-
-my $line = shift;
-
-   if ( LOG ) {
-      my @f = localtime( time );
-      my $timestamp = sprintf( "%02d-%02d-%04d.%02d:%02d:%02d",
-			 (1 + $f[ 4 ]), $f[ 3 ], (1900 + $f[ 5 ]),
-			 @f[ 2,1,0 ] );
-      printf LOG "%s %s: %s\n", $timestamp, $$, $line;
-   }
-   print STDERR "$line\n";
 }
 
 #  Make a connection to an IMAP host
