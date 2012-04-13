@@ -82,14 +82,9 @@ sub init {
 
    processArgs();
 
-   #  Determine whether we have SSL support via openSSL and IO::Socket::SSL
-   $ssl_installed = 1;
-   eval 'use IO::Socket::SSL';
-   if ( $@ ) {
-      $ssl_installed = 0;
-   }
-
    $timeout = 60 unless $timeout;
+
+   IMAP::Utils::init();
 
    #  Open the logFile
    #
@@ -134,61 +129,6 @@ sub readResponse
     $response =~ s/\r//g;
     push (@response,$response);
     if ($showIMAP) { Log ("<< $response",2); }
-}
-
-#  Make a connection to an IMAP host
-
-sub connectToHost {
-
-my $host = shift;
-my $conn = shift;
-
-   Log("Connecting to $host") if $debug;
-   
-   ($host,$port) = split(/:/, $host);
-   $port = 143 unless $port;
-
-   # We know whether to use SSL for ports 143 and 993.  For any
-   # other ones we'll have to figure it out.
-   $mode = sslmode( $host, $port );
-
-   if ( $mode eq 'SSL' ) {
-      unless( $ssl_installed == 1 ) {
-         warn("You must have openSSL and IO::Socket::SSL installed to use an SSL connection");
-         Log("You must have openSSL and IO::Socket::SSL installed to use an SSL connection");
-         exit;
-      }
-      Log("Attempting an SSL connection") if $debug;
-      $$conn = IO::Socket::SSL->new(
-         Proto           => "tcp",
-         SSL_verify_mode => 0x00,
-         PeerAddr        => $host,
-         PeerPort        => $port,
-      );
-
-      unless ( $$conn ) {
-        $error = IO::Socket::SSL::errstr();
-        Log("Error connecting to $host: $error");
-        warn("Error connecting to $host: $error");
-        exit;
-      }
-   } else {
-      #  Non-SSL connection
-      Log("Attempting a non-SSL connection") if $debug;
-      $$conn = IO::Socket::INET->new(
-         Proto           => "tcp",
-         PeerAddr        => $host,
-         PeerPort        => $port,
-      );
-
-      unless ( $$conn ) {
-        Log("Error connecting to $host:$port: $@");
-        warn "Error connecting to $host:$port: $@";
-        exit;
-      }
-   } 
-   Log("Connected to $host on port $port");
-
 }
 
 sub sslmode {

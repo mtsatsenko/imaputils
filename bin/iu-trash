@@ -75,6 +75,7 @@ sub init {
 
    if ($timeout eq '') { $timeout = 60; }
 
+   IMAP::Utils::init();
    #  Open the logFile
    #
    if ( $logfile ) {
@@ -118,66 +119,6 @@ sub readResponse
     $response =~ s/\r//g;
     push (@response,$response);
     if ($showIMAP) { &Log ("<< $response",2); }
-}
-
-#  connectToHost
-#
-#  Make an IMAP4 connection to a host
-# 
-sub connectToHost {
-
-my $host = shift;
-my $conn = shift;
-
-   &Log("Connecting to $host") if $debug;
-
-   $sockaddr = 'S n a4 x8';
-   ($name, $aliases, $proto) = getprotobyname('tcp');
-   ($host,$port) = split(/:/, $host);
-   $port = 143 if !$port;
-
-   if ($host eq "") {
-	&Log ("no remote host defined");
-	close LOG; 
-	exit (1);
-   }
-
-   ($name, $aliases, $type, $len, $serverAddr) = gethostbyname ($host);
-   if (!$serverAddr) {
-	&Log ("$host: unknown host");
-	close LOG; 
-	exit (1);
-   }
-
-   #  Connect to the IMAP4 server
-   #
-
-   $server = pack ($sockaddr, &AF_INET, $port, $serverAddr);
-   if (! socket($conn, &PF_INET, &SOCK_STREAM, $proto) ) {
-	&Log ("socket: $!");    
-	close LOG;
-	exit (1);
-   }
-   if ( ! connect( $conn, $server ) ) {
-	&Log ("connect: $!");
-	return 0;
-   }
-
-   select( $conn ); $| = 1;
-   while (1) {
-	&readResponse ( $conn );
-	if ( $response =~ /^\* OK/i ) {
-	   last;
-	}
-	else {
- 	   &Log ("Can't connect to host on port $port: $response");
-	   return 0;
-	}
-   }
-   &Log ("connected to $host") if $debug;
-
-   select( $conn ); $| = 1;
-   return 1;
 }
 
 #  trim

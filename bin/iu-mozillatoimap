@@ -95,7 +95,7 @@ sub init {
    $debug    = 1 if $opt_d;
    $showIMAP = 1 if $opt_I;
    ($imapHost,$imapUser,$imapPwd) = split(/\//, $opt_i);
-
+   IMAP::Utils::init();
    if ( $logfile ) {
 	openLog($logfile);
    }
@@ -149,66 +149,6 @@ local $_;
     close(FH);
 
     return wantarray ? @mail : \@mail;
-}
-
-#  connectToHost
-#
-#  Make an IMAP connection to a host
-# 
-sub connectToHost {
-
-my $host = shift;
-my $conn = shift;
-
-   &Log("Connecting to $host") if $debug;
-
-   $sockaddr = 'S n a4 x8';
-   ($name, $aliases, $proto) = getprotobyname('tcp');
-   ($host,$port) = split(/:/, $host);
-   $port = 143 unless $port;
-
-   if ($host eq "") {
-	&Log ("no remote host defined");
-	close LOG; 
-	exit (1);
-   }
-
-   ($name, $aliases, $type, $len, $serverAddr) = gethostbyname ($host);
-   if (!$serverAddr) {
-	&Log ("$host: unknown host");
-	close LOG; 
-	exit (1);
-   }
-
-   #  Connect to the IMAP server
-   #
-
-   $server = pack ($sockaddr, &AF_INET, $port, $serverAddr);
-   if (! socket($conn, &PF_INET, &SOCK_STREAM, $proto) ) {
-	&Log ("socket: $!");    
-	close LOG;
-	exit (1);
-   }
-   if ( ! connect( $conn, $server ) ) {
-	&Log ("connect: $!");
-	return 0;
-   }
-
-   select( $conn ); $| = 1;
-   while (1) {
-	&readResponse ( $conn );
-	if ( $response =~ /^\* OK/i ) {
-	   last;
-	}
-	else {
- 	   &Log ("Can't connect to host on port $port: $response");
-	   return 0;
-	}
-   }
-   &Log ("connected to $host") if $debug;
-
-   select( $conn ); $| = 1;
-   return 1;
 }
 
 #

@@ -84,19 +84,14 @@ sub init {
 
    $timeout = 60 unless $timeout;
 
+   IMAP::Utils::init();
+
    #  Open the logFile
    #
    if ( $logfile ) {
       openLog($logfile);
    }
    Log("$0 starting\n");
-
-   #  Determine whether we have SSL support via openSSL and IO::Socket::SSL
-   $ssl_installed = 1;
-   eval 'use IO::Socket::SSL';
-   if ( $@ ) {
-      $ssl_installed = 0;
-   }
 
    $debug = 1;
 }
