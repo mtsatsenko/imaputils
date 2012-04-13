@@ -105,17 +105,11 @@ sub init {
    $showIMAP  = 1 if $opt_I;
    ($imapHost,$imapUser,$imapPwd) = split(/\//, $opt_i);
 
+   IMAP::Utils::init();
    if ( $logfile ) {
       openLog($logfile);
    }
    Log("Starting");
-
-   #  Determine whether we have SSL support via openSSL and IO::Socket::SSL
-   $ssl_installed = 1;
-   eval 'use IO::Socket::SSL';
-   if ( $@ ) {
-      $ssl_installed = 0;
-   }
 }
 
 
@@ -150,71 +144,6 @@ my $msgs = shift;
       }
       push( @$msgs, "$dir/$_");
    }
-}
-
-#  connectToHost
-#
-#  Make an IMAP connection to a host
-# 
-sub connectToHost {
-
-my $host = shift;
-my $conn = shift;
-
-   Log("Connecting to $host") if $debug;
-
-   $sockaddr = 'S n a4 x8';
-   ($name, $aliases, $proto) = getprotobyname('tcp');
-   ($host,$port) = split(/:/, $host);
-   $port = 143 unless $port;
-
-   if ($host eq "") {
-	Log ("no remote host defined");
-	close LOG; 
-	exit (1);
-   }
-
-   # We know whether to use SSL for ports 143 and 993.  For any
-   # other ones we'll have to figure it out.
-   $mode = sslmode( $host, $port );
-
-   if ( $mode eq 'SSL' ) {
-      unless( $ssl_installed == 1 ) {
-         warn("You must have openSSL and IO::Socket::SSL installed to use an SSL connection");
-         Log("You must have openSSL and IO::Socket::SSL installed to use an SSL connection");
-         exit;
-      }
-      Log("Attempting an SSL connection") if $debug;
-      $$conn = IO::Socket::SSL->new(
-         Proto           => "tcp",
-         SSL_verify_mode => 0x00,
-         PeerAddr        => $host,
-         PeerPort        => $port,
-      );
-
-      unless ( $$conn ) {
-        $error = IO::Socket::SSL::errstr();
-        Log("Error connecting to $host: $error");
-        exit;
-      }
-   } else {
-      #  Non-SSL connection
-      Log("Attempting a non-SSL connection") if $debug;
-      $$conn = IO::Socket::INET->new(
-         Proto           => "tcp",
-         PeerAddr        => $host,
-         PeerPort        => $port,
-      );
-
-      unless ( $$conn ) {
-        Log("Error connecting to $host:$port: $@");
-        warn "Error connecting to $host:$port: $@";
-        exit;
-      }
-   } 
-
-   select( $$conn ); $| = 1;
-   return 1;
 }
 
 #

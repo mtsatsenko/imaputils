@@ -255,7 +255,7 @@ sub init {
    if ( $ENV{OS} =~ /Windows/i ) {
       print "\nThis version of migrateIMAP does not support Windows since\n";
       print "it uses fork() to run multiple simultaneous migration processes\n";
-      print "for better performance.  Please use migrateIMAP-windows.pl\n";
+      print "for better performance.  Please use iu-migrate-win\n";
       print "instead.\n\n";
       exit;
    }
@@ -294,12 +294,12 @@ sub init {
 
    $timeout = 300 unless $timeout;
    $maxChildren = 2 unless $maxChildren;
-   $hostname = `hostname`;
 
    if ( $md5_hash ) {
       use Digest::MD5 qw(md5_hex);
    }
 
+   IMAP::Utils::init();
    $logfile = "migrateIMAP.log" unless $logfile;
    if ( -e $logfile ) {
       #  Rename the existing logfile
@@ -328,13 +328,6 @@ sub init {
    $date = ctime(time);
    chomp($date);
 
-   #  Determine whether we have SSL support via openSSL and IO::Socket::SSL
-   $ssl_installed = 1;
-   eval 'use IO::Socket::SSL';
-   if ( $@ ) {
-      $ssl_installed = 0;
-   }
-
 }
 
 sub usage {
@@ -359,102 +352,6 @@ sub usage {
    print " -T copy custom flags (eg, \$Label1,\$MDNSent,etc)\n";
    exit;
 
-}
-
-#  Make a connection to an IMAP host
-
-sub connectToHost {
-
-my $host = shift;
-my $conn = shift;
-
-   Log("Connecting to $host") if $debug;
-   
-   ($host,$port) = split(/:/, $host);
-   $port = 143 unless $port;
-
-   # We know whether to use SSL for ports 143 and 993.  For any
-   # other ones we'll have to figure it out.
-   $mode = sslmode( $host, $port );
-
-   if ( $mode eq 'SSL' ) {
-      unless( $ssl_installed == 1 ) {
-         warn("You must have openSSL and IO::Socket::SSL installed to use an SSL connection");
-         Log("You must have openSSL and IO::Socket::SSL installed to use an SSL connection");
-         exit;
-      }
-      Log("Attempting an SSL connection") if $debug;
-      $$conn = IO::Socket::SSL->new(
-         Proto           => "tcp",
-         SSL_verify_mode => 0x00,
-         PeerAddr        => $host,
-         PeerPort        => $port,
-      );
-
-      unless ( $$conn ) {
-        $error = IO::Socket::SSL::errstr();
-        Log("Error connecting to $host: $error");
-        warn("Error connecting to $host: $error");
-        exit;
-      }
-   } else {
-      #  Non-SSL connection
-      Log("Attempting a non-SSL connection") if $debug;
-      $$conn = IO::Socket::INET->new(
-         Proto           => "tcp",
-         PeerAddr        => $host,
-         PeerPort        => $port,
-      );
-
-      unless ( $$conn ) {
-        Log("Error connecting to $host:$port: $@");
-        warn "Error connecting to $host:$port: $@";
-        exit;
-      }
-   } 
-   Log("Connected to $host on port $port");
-
-}
-
-sub sslmode {
-
-my $host = shift;
-my $port = shift;
-my $mode;
-
-   #  Determine whether to make an SSL connection
-   #  to the host.  Return 'SSL' if so.
-
-   if ( $port == 143 ) {
-      #  Standard non-SSL port
-      return '';
-   } elsif ( $port == 993 ) {
-      #  Standard SSL port
-      return 'SSL';
-   }
-      
-   unless ( $ssl_installed ) {
-      #  We don't have SSL installed on this machine
-      return '';
-   }
-
-   #  For any other port we need to determine whether it supports SSL
-
-   my $conn = IO::Socket::SSL->new(
-         Proto           => "tcp",
-         SSL_verify_mode => 0x00,
-         PeerAddr        => $host,
-         PeerPort        => $port,
-    );
-
-    if ( $conn ) {
-       close( $conn );
-       $mode = 'SSL';
-    } else {
-       $mode = '';
-    }
-
-   return $mode;
 }
 
 #  login

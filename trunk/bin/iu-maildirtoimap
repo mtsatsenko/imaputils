@@ -183,19 +183,13 @@ require "ctime.pl";
    $timeout = 45 unless $timeout;
    $maxChildren = 1 unless $maxChildren;
 
+   IMAP::Utils::init();
    $logfile = "maildir_to_imap.log" unless $logfile;
    openLog($logfile);
    Log("$0 starting");
 
    $date = ctime(time);
    chomp($date);
-
-   #  Determine whether we have SSL support via openSSL and IO::Socket::SSL
-   $ssl_installed = 1;
-   eval 'use IO::Socket::SSL';
-   if ( $@ ) {
-      $ssl_installed = 0;
-   }
 
 }
 
@@ -214,7 +208,6 @@ sub usage {
 
 }
 
-#  Make a connection to an IMAP host
 
 sub format_bytes {
 
@@ -370,40 +363,6 @@ sub stats {
 
 }
 
-#
-#  Log
-#
-#  This subroutine formats and writes a log message to STDERR.
-#
-
-sub Log {
- 
-my $str = shift;
-
-   #  If a logfile has been specified then write the output to it
-   #  Otherwise write it to STDOUT
-
-   if ( $logfile ) {
-      ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime;
-      if ($year < 99) { $yr = 2000; }
-      else { $yr = 1900; }
-      $line = sprintf ("%.2d-%.2d-%d.%.2d:%.2d:%.2d %s\n",
-		     $mon + 1, $mday, $year + $yr, $hour, $min, $sec,$str);
-      print LOG "$line";
-   } 
-   print STDOUT "$str\n" unless $quiet_mode;
-
-}
-
-
-sub usage {
-
-   print STDOUT "usage:\n";
-   print STDOUT " iu-maildirtoimap -i <user list> -D <imapserver[:port]>\n";
-   exit;
-
-}
-
 sub processArgs {
 
    if ( !getopts( "" ) ) {
@@ -537,101 +496,6 @@ my $users    = shift;
    }
    close F;
 
-}
-
-#  Make a connection to an IMAP host
-
-sub connectToHost {
-
-my $host = shift;
-my $conn = shift;
-
-   Log("Connecting to $host");
-   
-   ($host,$port) = split(/:/, $host);
-   $port = 143 unless $port;
-
-   # We know whether to use SSL for ports 143 and 993.  For any
-   # other ones we'll have to figure it out.
-   $mode = sslmode( $host, $port );
-
-   if ( $mode eq 'SSL' ) {
-      unless( $ssl_installed == 1 ) {
-         warn("You must have openSSL and IO::Socket::SSL installed to use an SSL connection");
-         Log("You must have openSSL and IO::Socket::SSL installed to use an SSL connection");
-         exit;
-      }
-      Log("Attempting an SSL connection") if $debug;
-      $$conn = IO::Socket::SSL->new(
-         Proto           => "tcp",
-         SSL_verify_mode => 0x00,
-         PeerAddr        => $host,
-         PeerPort        => $port,
-      );
-
-      unless ( $$conn ) {
-        $error = IO::Socket::SSL::errstr();
-        Log("Error connecting to $host: $error");
-        warn("Error connecting to $host: $error");
-        exit;
-      }
-   } else {
-      #  Non-SSL connection
-      Log("Attempting a non-SSL connection") if $debug;
-      $$conn = IO::Socket::INET->new(
-         Proto           => "tcp",
-         PeerAddr        => $host,
-         PeerPort        => $port,
-      );
-
-      unless ( $$conn ) {
-        Log("Error connecting to $host:$port: $@");
-        warn "Error connecting to $host:$port: $@";
-        exit;
-      }
-   } 
-
-}
-
-sub sslmode {
-
-my $host = shift;
-my $port = shift;
-my $mode;
-
-   #  Determine whether to make an SSL connection
-   #  to the host.  Return 'SSL' if so.
-
-   if ( $port == 143 ) {
-      #  Standard non-SSL port
-      return '';
-   } elsif ( $port == 993 ) {
-      #  Standard SSL port
-      return 'SSL';
-   }
-      
-   unless ( $ssl_installed ) {
-      #  We don't have SSL installed on this machine
-      return '';
-   }
-
-   #  For any other port we need to determine whether it supports SSL
-
-   my $conn = IO::Socket::SSL->new(
-         Proto           => "tcp",
-         SSL_verify_mode => 0x00,
-         PeerAddr        => $host,
-         PeerPort        => $port,
-    );
-
-    if ( $conn ) {
-       close( $conn );
-       $mode = 'SSL';
-    } else {
-       $mode = '';
-    }
-
-   return $mode;
 }
 
 #  login
