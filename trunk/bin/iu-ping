@@ -113,39 +113,6 @@ sub getArgs {
 
 }
 
-#  sendCommand
-#
-#  This subroutine formats and sends an IMAP protocol command to an
-#  IMAP server on a specified connection.
-#
-
-sub sendCommand
-{
-    local($fd) = shift @_;
-    local($cmd) = shift @_;
-
-    print $fd "$cmd\r\n";
-    print STDOUT ">> $cmd\n" if $showIMAP;
-}
-
-#
-#  readResponse
-#
-#  This subroutine reads and formats an IMAP protocol response from an
-#  IMAP server on a specified connection.
-#
-
-sub readResponse
-{
-    local($fd) = shift @_;
-
-    $response = <$fd>;
-    chop $response;
-    $response =~ s/\r//g;
-    push (@response,$response);
-    print STDOUT "<< $response\n" if $showIMAP;
-}
-
 #  login
 #
 #  login in at the source host with the user's name and password

@@ -121,41 +121,6 @@ sub init {
    return $dir;
 }
 
-#
-#  sendCommand
-#
-#  This subroutine formats and sends an IMAP protocol command to an
-#  IMAP server on a specified connection.
-#
-
-sub sendCommand
-{
-local($fd) = shift @_;
-local($cmd) = shift @_;
-
-    print $fd "$cmd\r\n";
-
-    if ($showIMAP) { &Log (">> $cmd",2); }
-}
-
-#
-#  readResponse
-#
-#  This subroutine reads and formats an IMAP protocol response from an
-#  IMAP server on a specified connection.
-#
-
-sub readResponse {
-
-local($fd) = shift @_;
-
-    $response = <$fd>;
-    chop $response;
-    $response =~ s/\r//g;
-    push (@response,$response);
-    if ($showIMAP) { &Log ("<< $response",2); }
-}
-
 #  trim
 #
 #  remove leading and trailing spaces from a string
