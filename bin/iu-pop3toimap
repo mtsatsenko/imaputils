@@ -473,20 +473,6 @@ sub alarmSet {
     }
 }
 
-#  sendCommand
-#
-#  This subroutine formats and sends a command  on the designated
-#  socket
-#
-sub sendCommand {
-
-my $fd = shift;
-my $cmd = shift;
-
-   print $fd "$cmd\r\n";
-   Log (">> $cmd") if $debug;
-}
-
 #  logoutIMAP
 #
 #  log out from the IMAP host

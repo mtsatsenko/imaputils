@@ -733,20 +733,6 @@ my $fd = shift;
    Log ("<< $response") if $showIMAP;
 }
 
-#  sendCommand
-#
-#  This subroutine formats and sends an IMAP protocol command to an
-#  IMAP server on a specified connection.
-#
-sub sendCommand {
-
-local($fd) = shift @_;
-local($cmd) = shift @_;
-
-    print $fd "$cmd\r\n";
-    Log (">> $cmd") if $showIMAP;
-}
-
 #
 #  log out from the host
 #

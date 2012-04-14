@@ -138,7 +138,7 @@ my $conn = shift;
 
    sendCommand ($conn, "1 LOGIN $user $pwd");
    while (1) {
-	readResponse ( $conn );
+	$response = readResponse ( $conn );
 	last if $response =~ /^1 OK/i;
 	if ($response =~ /^1 NO|^1 BAD/i) {
            print "Unexpected LOGIN response: $response\n";
@@ -158,7 +158,7 @@ my $capability;
 
    sendCommand ($conn, "1 CAPABILITY");
    while (1) {
-        readResponse ( $conn );
+        $response = readResponse ( $conn );
         $capability = $response if $response =~ /\* CAPABILITY/i;
         last if $response =~ /^1 OK/i;
         if ($response =~ /^1 NO|^1 BAD/i) {
@@ -180,7 +180,7 @@ my $conn = shift;
    undef @response;
    sendCommand ($conn, "1 LOGOUT");
    while ( 1 ) {
-        readResponse ($conn);
+        $response = readResponse ($conn);
         if ( $response =~ /^1 OK/i ) {
                 last;
         }
@@ -193,25 +193,6 @@ my $conn = shift;
    return;
 }
 
-sub sendCommand {
-
-my $fd = shift;
-my $cmd = shift;
-
-    print $fd "$cmd\r\n";
-}
-
-sub readResponse {
-
-my $fd = shift;
-
-    $response = <$fd>;
-    chop $response;
-    $response =~ s/\r//g;
-    push (@response,$response);
-}
-
-
 #  listMailboxes
 #
 #  Get a list of the user's mailboxes
@@ -223,7 +204,7 @@ my $conn = shift;
    sendCommand ($conn, "1 LIST \"\" *");
    undef @response;
    while ( 1 ) {
-        &readResponse ($conn);
+        $response = &readResponse ($conn);
         if ( $response =~ /^1 OK/i ) {
                 last;
         }

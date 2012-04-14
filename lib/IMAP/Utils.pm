@@ -5,11 +5,11 @@
 package IMAP::Utils;
 require Exporter;
 @ISA = qw(Exporter);
-@EXPORT= qw(Log openLog connectToHost);
+@EXPORT= qw(Log openLog connectToHost readResponse sendCommand signalHandler);
 
+#  Open the logFile
+#
 sub openLog {
-   #  Open the logFile
-   #
    $logfile = shift;
    if ( $logfile ) {
       if ( !open(LOG, ">> $logfile")) {
@@ -55,6 +55,8 @@ sub init {
       $utf7_installed = 0;
    }
 }
+
+# open a connection to IMAP server
 
 sub connectToHost {
 
@@ -146,6 +148,55 @@ my $mode;
     }
 
    return $mode;
+}
+#
+#  sendCommand
+#
+#  This subroutine formats and sends an IMAP protocol command to an
+#  IMAP server on a specified connection.
+#
+
+sub sendCommand {
+
+    my $fd = shift;
+    my $cmd = shift;
+
+    print $fd "$cmd\r\n";
+    if ($showIMAP) { Log (">> $cmd",2); }
+}
+#
+#  readResponse
+#
+#  This subroutine reads and formats an IMAP protocol response from an
+#  IMAP server on a specified connection.
+#
+
+sub readResponse {
+
+    my $fd = shift;
+    exit unless defined $fd;
+
+    $response = <$fd>;
+    chop $response;
+    $response =~ s/\r//g;
+    push (@response,$response);
+    if ($showIMAP) { Log ("<< $response",2); }
+    return $response;
+}
+
+#  Handle signals
+
+sub signalHandler {
+
+my $sig = shift;
+
+   if ( $sig eq 'ALRM' ) {
+      Log("Caught a SIG$sig signal, timeout error");
+      $conn_timed_out = 1;
+   } else {
+      Log("Caught a SIG$sig signal, shutting down");
+      exit;
+   }
 }
 
 1;

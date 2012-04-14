@@ -77,34 +77,6 @@ sub init {
 #  IMAP server on a specified connection.
 #
 
-sub sendCommand {
-
-my $fd = shift;
-my $cmd = shift;
-
-    print $fd "$cmd\r\n";
-
-    Log (">> $cmd") if $showIMAP;
-}
-
-#
-#  readResponse
-#
-#  This subroutine reads and formats an IMAP protocol response from an
-#  IMAP server on a specified connection.
-#
-
-sub readResponse {
-    
-my $fd = shift;
-
-    $response = <$fd>;
-    chop $response;
-    $response =~ s/\r//g;
-    push (@response,$response);
-    Log ("<< $response") if $showIMAP;1
-}
-
 sub createMbx {
 
 my $mbx  = shift;
