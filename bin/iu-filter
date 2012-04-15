@@ -562,7 +562,7 @@ while(($x,$y) = each(%remhosts)) {
 
    &sendCommand ($remconn, "1 SELECT \"$dstmbx\"");
    while (1) {
-        &$response = readResponse ($remconn);
+        $response = readResponse ($remconn);
         last if ( $response =~ /^1 OK/i );
         last if $response =~ /^1 NO|^1 BAD/;
    }

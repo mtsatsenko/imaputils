@@ -179,7 +179,7 @@ my $conn = shift;
    sendCommand ($conn, "1 LIST \"\" \"$mbx\"");
    undef @response;
    while ( 1 ) {
-        &$response = readResponse ($conn);
+        $response = readResponse ($conn);
         if ( $response =~ /^1 OK/i ) {
                 last;
         }
@@ -240,7 +240,7 @@ my $from;
    $empty=0;
    select($conn);
    while ( 1 ) {
-	&$response = readResponse ( $conn );
+	$response = readResponse ( $conn );
 	if ( $response =~ / 0 EXISTS/i ) { $empty=1; }
 	if ( $response =~ /^1 OK/i ) {
 		# print STDERR "response $response\n";
@@ -260,7 +260,7 @@ my $from;
    &sendCommand ( $conn, "1 FETCH 1:* (uid flags internaldate body[header.fields (From Date)])");
    undef @response;
    while ( 1 ) {
-	&$response = readResponse ( $conn );
+	$response = readResponse ( $conn );
 	if ( $response =~ /^1 OK/i ) {
 		# print STDERR "response $response\n";
 		last;
@@ -313,13 +313,13 @@ my $msgid  = shift;
    &Log("   Fetching msg $msgnum...") if $debug;
    &sendCommand ($conn, "1 EXAMINE \"$mbx\"");
    while (1) {
-        &$response = readResponse ($conn);
+        $response = readResponse ($conn);
 	last if ( $response =~ /^1 OK/i );
    }
 
    &sendCommand( $conn, "1 FETCH $msgnum (rfc822)");
    while (1) {
-	&$response = readResponse ($conn);
+	$response = readResponse ($conn);
 	if ( $response =~ /^1 OK/i ) {
 		$size = length($message);
 		last;
