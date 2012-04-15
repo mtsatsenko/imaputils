@@ -130,26 +130,6 @@ sub usage {
 
 }
 
-sub login {
-
-my $user = shift;
-my $pwd  = shift;
-my $conn = shift;
-
-   sendCommand ($conn, "1 LOGIN $user $pwd");
-   while (1) {
-	$response = readResponse ( $conn );
-	last if $response =~ /^1 OK/i;
-	if ($response =~ /^1 NO|^1 BAD/i) {
-           print "Unexpected LOGIN response: $response\n";
-           return 0;
-	}
-   }
-   print "Logged in as $user\n" if $debug;
-
-   return 1;
-}
-
 sub capability {
 
 my $conn = shift;
@@ -171,26 +151,6 @@ my $capability;
    $capability =~ s/^\* CAPABILITY //;
    print "$capability\n";
 
-}
-
-sub logout {
-
-my $conn = shift;
-
-   undef @response;
-   sendCommand ($conn, "1 LOGOUT");
-   while ( 1 ) {
-        $response = readResponse ($conn);
-        if ( $response =~ /^1 OK/i ) {
-                last;
-        }
-        elsif ( $response !~ /^\*/ ) {
-                print "Unexpected LOGOUT response: $response\n";
-                last;
-        }
-   }
-   close $conn;
-   return;
 }
 
 #  listMailboxes

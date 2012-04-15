@@ -5,7 +5,7 @@
 package IMAP::Utils;
 require Exporter;
 @ISA = qw(Exporter);
-@EXPORT= qw(Log openLog connectToHost readResponse sendCommand signalHandler);
+@EXPORT= qw(Log openLog connectToHost readResponse sendCommand signalHandler logout login);
 
 #  Open the logFile
 #
@@ -183,6 +183,102 @@ sub readResponse {
     if ($showIMAP) { Log ("<< $response",2); }
     return $response;
 }
+
+#  login
+#
+#  login in at the source host with the user's name and password
+#
+sub login {
+
+my $user = shift;
+my $pwd  = shift;
+my $host = shift;
+my $conn = shift;
+my $method = shift or 'LOGIN';
+
+   Log("Authenticating to $host as $user");
+   if ( uc( $method ) eq 'CRAM-MD5' ) {
+      #  A CRAM-MD5 login is requested
+      Log("login method $method");
+      my $rc = login_cram_md5( $user, $pwd, $conn );
+      return $rc;
+   }
+
+   #  Otherwise do a PLAIN login
+
+   sendCommand ($conn, "1 LOGIN $user \"$pwd\"");
+   while (1) {
+        readResponse ( $conn );
+        last if $response =~ /^1 OK/i;
+        if ($response =~ /^1 NO|^1 BAD|^\* BYE/i) {
+           Log ("unexpected LOGIN response: $response");
+           return 0;
+        }
+   }
+   Log("Logged in as $user") if $debug;
+
+   return 1;
+}
+
+sub login_cram_md5 {
+
+my $user = shift;
+my $pwd  = shift;
+my $conn = shift;
+
+   sendCommand ($conn, "1 AUTHENTICATE CRAM-MD5");
+   while (1) {
+        readResponse ( $conn );
+        last if $response =~ /^\+/;
+        if ($response =~ /^1 NO|^1 BAD|^\* BYE/i) {
+           Log ("unexpected LOGIN response: $response");
+           return 0;
+        }
+   }
+
+   my ($challenge) = $response =~ /^\+ (.+)/;
+
+   Log("challenge $challenge") if $debug;
+   $response = cram_md5( $challenge, $user, $pwd );
+   Log("response $response") if $debug;
+
+   sendCommand ($conn, $response);
+   while (1) {
+        readResponse ( $conn );
+        last if $response =~ /^1 OK/i;
+        if ($response =~ /^1 NO|^1 BAD|^\* BYE/i) {
+           Log ("unexpected LOGIN response: $response");
+           return 0;
+        }
+   }
+   Log("Logged in as $user") if $debug;
+
+   return 1;
+}
+
+
+# logout from IMAP server
+sub logout {
+
+   my $conn = shift;
+
+   undef @response;
+   sendCommand ($conn, "1 LOGOUT");
+   while ( 1 ) {
+        $response = readResponse ($conn);
+        next if $response =~ /APPEND complete/i;   # Ignore strays
+        if ( $response =~ /^1 OK/i ) {
+                last;
+        }
+        elsif ( $response !~ /^\*/ ) {
+                print "Unexpected LOGOUT response: $response\n";
+                last;
+        }
+   }
+   close $conn;
+   return;
+}
+
 
 #  Handle signals
 

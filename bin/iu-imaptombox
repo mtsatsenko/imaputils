@@ -134,60 +134,6 @@ local (*string) = @_;
    return;
 }
 
-
-#  login
-#
-#  login in at the IMAP host with the user's name and password
-#
-sub login {
-
-my $user = shift;
-my $pwd  = shift;
-my $conn = shift;
-
-   &sendCommand ($conn, "1 LOGIN $user \"$pwd\"");
-   while (1) {
-	&readResponse ( $conn );
-	if ($response =~ /^1 OK/i) {
-	   last;
-	}
-	elsif ($response =~ /NO/) {
-	   &Log ("unexpected LOGIN response: $response");
-	   exit;
-	}
-   }
-   &Log("Logged in as $user") if $debug;
-
-   return 1;
-}
-
-
-#  logout
-#
-#  log out from the host
-#
-sub logout {
-
-my $conn = shift;
-
-   ++$lsn;
-   undef @response;
-   &sendCommand ($conn, "$lsn LOGOUT");
-   while ( 1 ) {
-	&readResponse ($conn);
-	if ( $response =~ /^$lsn OK/i ) {
-		last;
-	}
-	elsif ( $response !~ /^\*/ ) {
-		&Log ("unexpected LOGOUT response: $response");
-		last;
-	}
-   }
-   close $conn;
-   return;
-}
-
-
 #  getMailboxList
 #
 #  get a list of the user's mailboxes from the source host
@@ -233,7 +179,7 @@ my $conn = shift;
    sendCommand ($conn, "1 LIST \"\" \"$mbx\"");
    undef @response;
    while ( 1 ) {
-        &readResponse ($conn);
+        &$response = readResponse ($conn);
         if ( $response =~ /^1 OK/i ) {
                 last;
         }
@@ -294,7 +240,7 @@ my $from;
    $empty=0;
    select($conn);
    while ( 1 ) {
-	&readResponse ( $conn );
+	&$response = readResponse ( $conn );
 	if ( $response =~ / 0 EXISTS/i ) { $empty=1; }
 	if ( $response =~ /^1 OK/i ) {
 		# print STDERR "response $response\n";
@@ -314,7 +260,7 @@ my $from;
    &sendCommand ( $conn, "1 FETCH 1:* (uid flags internaldate body[header.fields (From Date)])");
    undef @response;
    while ( 1 ) {
-	&readResponse ( $conn );
+	&$response = readResponse ( $conn );
 	if ( $response =~ /^1 OK/i ) {
 		# print STDERR "response $response\n";
 		last;
@@ -367,13 +313,13 @@ my $msgid  = shift;
    &Log("   Fetching msg $msgnum...") if $debug;
    &sendCommand ($conn, "1 EXAMINE \"$mbx\"");
    while (1) {
-        &readResponse ($conn);
+        &$response = readResponse ($conn);
 	last if ( $response =~ /^1 OK/i );
    }
 
    &sendCommand( $conn, "1 FETCH $msgnum (rfc822)");
    while (1) {
-	&readResponse ($conn);
+	&$response = readResponse ($conn);
 	if ( $response =~ /^1 OK/i ) {
 		$size = length($message);
 		last;
@@ -524,7 +470,7 @@ my $delimiter = shift;
    @response = ();
    sendCommand( $conn, "1 NAMESPACE");
    while ( 1 ) {
-      readResponse( $conn );
+      $response = readResponse( $conn );
       if ( $response =~ /^1 OK/i ) {
          last;
       } elsif ( $response =~ /NO|BAD/i ) {

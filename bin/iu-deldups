@@ -163,61 +163,6 @@ local (*string) = @_;
    return;
 }
 
-
-#  login
-#
-#  login in at the host with the user's name and password
-#
-sub login {
-
-my $user = shift;
-my $pwd  = shift;
-my $conn = shift;
-
-   $rsn = 1;
-   sendCommand ($conn, "$rsn LOGIN $user $pwd");
-   while (1) {
-	readResponse ( $conn );
-	if ($response =~ /^$rsn OK/i) {
-		last;
-	}
-	elsif ($response =~ /NO/) {
-		Log ("unexpected LOGIN response: $response");
-		return 0;
-	}
-   }
-   Log("Logged in as $user") if $debug;
-
-   return 1;
-}
-
-
-#  logout
-#
-#  log out from the host
-#
-sub logout {
-
-my $conn = shift;
-
-   ++$lsn;
-   undef @response;
-   sendCommand ($conn, "$lsn LOGOUT");
-   while ( 1 ) {
-	readResponse ($conn);
-	if ( $response =~ /^$lsn OK/i ) {
-		last;
-	}
-	elsif ( $response !~ /^\*/ ) {
-		Log ("unexpected LOGOUT response: $response");
-		last;
-	}
-   }
-   close $conn;
-   return;
-}
-
-
 #  getMailboxList
 #
 #  get a list of the user's mailboxes from the host
@@ -246,7 +191,7 @@ my @mbxs;
    sendCommand ($conn, "$rsn LIST \"\" *");
    undef @response;
    while ( 1 ) {
-	readResponse ($conn);
+	$response = readResponse ($conn);
 	if ( $response =~ /^$rsn OK/i ) {
 		last;
 	}
@@ -302,7 +247,7 @@ my $msgnum;
    undef @response;
    $empty=0;
    while ( 1 ) {
-	readResponse ( $conn );
+	$response = readResponse ( $conn );
 	if ( $response =~ /^1 OK/i ) {
 		# print STDERR "response $response\n";
 		last;
@@ -322,7 +267,7 @@ my $msgnum;
    sendCommand ( $conn, "1 FETCH 1:* (uid flags internaldate body[header.fields ($field)])");
    undef @response;
    while ( 1 ) {
-	readResponse ( $conn );
+	$response = readResponse ( $conn );
 	if ( $response =~ /^1 OK/i ) {
 		# print STDERR "response $response\n";
 		last;
@@ -398,7 +343,7 @@ my $message = shift;
 
    sendCommand( $conn, "$rsn FETCH $msgnum (rfc822)");
    while (1) {
-	readResponse ($conn);
+	$response = readResponse ($conn);
 	if ( $response =~ /^$rsn OK/i ) {
 		$size = length($message);
 		last;
@@ -490,14 +435,14 @@ my $msgnum;
    Log("SELECT $mbx") if $debug;
    sendCommand ( $conn, "1 SELECT \"$mbx\"");
    while (1) {
-	readResponse ($conn);
+	$response = readResponse ($conn);
 	last if $response =~ /^1 OK/;
    }
 
    Log("Search for $msgid") if $debug;
    sendCommand ( $conn, "$rsn SEARCH header Message-ID \"$msgid\"");
    while (1) {
-	readResponse ($conn);
+	$response = readResponse ($conn);
 	if ( $response =~ /\* SEARCH /i ) {
 	   ($dmy, $msgnum) = split(/\* SEARCH /i, $response);
 	   ($msgnum) = split(/ /, $msgnum);
@@ -519,7 +464,7 @@ my $rc;
 
    sendCommand ( $conn, "1 STORE $msgnum +FLAGS (\\Deleted)");
    while (1) {
-        readResponse ($conn);
+        $response = readResponse ($conn);
         if ( $response =~ /^1 OK/i ) {
 	   $rc = 1;
 	   Log("       Marked msg number $msgnum for delete");
@@ -546,14 +491,14 @@ my $conn  = shift;
 
    sendCommand ($conn, "$rsn SELECT \"$mbx\"");
    while (1) {
-        readResponse ($conn);
+        $response = readResponse ($conn);
         last if ( $response =~ /^$rsn OK/i );
    }
 
    sendCommand ( $conn, "1 EXPUNGE");
    $expunged=0;
    while (1) {
-        readResponse ($conn);
+        $response = readResponse ($conn);
         $expunged++ if $response =~ /\* (.+) Expunge/i;
         last if $response =~ /^1 OK/;
 
@@ -587,7 +532,7 @@ my $rc;
 
    sendCommand ( $conn, "1 STORE $msgnum +FLAGS ($flags)");
    while (1) {
-        readResponse ($conn);
+        $response = readResponse ($conn);
         if ( $response =~ /^1 OK/i ) {
 	   Log("   Updated flags for $msgid");
 	   $rc = 1;
@@ -646,7 +591,7 @@ my $moved=0;
    #  Create the mailbox if it doesn't already exist
    sendCommand ($conn, "1 CREATE \"$dstmbx\"");
    while ( 1 ) {
-       readResponse ($conn);
+       $response = readResponse ($conn);
        last if $response =~ /^1 OK/i;
        if ( $response !~ /^\*/ ) {
           if (!($response =~ /already exists|file exists|can\'t create/i)) {
@@ -658,7 +603,7 @@ my $moved=0;
 
    sendCommand ($conn, "1 COPY $msgnum \"$dstmbx\"");
    while (1) {
-        readResponse ( $conn );
+        $response = readResponse ( $conn );
         if ( $response =~ /^1 OK/i ) {
            $moved=1;
            last; 
@@ -711,7 +656,7 @@ my $message = shift;
 
    sendCommand( $conn, "1 FETCH $msgnum body[text]");
    while (1) {
-	readResponse ($conn);
+	$response = readResponse ($conn);
         last if $response =~ /^1 NO|^1 BAD|^\* BYE/;
 	if ( $response =~ /^1 OK/i ) {
 		$size = length($message);
@@ -763,7 +708,7 @@ my $conn = shift;
 
    sendCommand( $conn, "1 SELECT \"$mbx\"");
    while ( 1 ) {
-      readResponse( $conn );
+      $response = readResponse( $conn );
       if ( $response =~ /^1 OK/i ) {
          last;
       } elsif ( $response =~ /^1 NO|^1 BAD|^\* BYE/i ) {

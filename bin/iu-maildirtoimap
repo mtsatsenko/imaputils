@@ -498,34 +498,8 @@ my $users    = shift;
 
 }
 
-#  login
 #
-#  login in at the IMAP host with the user's name and password
-#
-sub login {
-
-my $user = shift;
-my $pwd  = shift;
-my $conn = shift;
-
-   sendCommand ($conn, "1 LOGIN $user $pwd");
-   while (1) {
-	readResponse ( $conn );
-	if ($response =~ /^1 OK/i) {
-		last;
-	}
-	elsif ($response =~ /^1 NO|^1 BAD/) {
-		Log ("$user login failed: unexpected LOGIN response: $response");
-		return 0;
-	}
-   }
-   Log("Logged in as $user") if $debug;
-
-   return 1;
-}
-
-#
-#  readResponse
+#  $response = readResponse
 #
 #  This subroutine reads and formats an IMAP protocol response from an
 #  IMAP server on a specified connection.
@@ -542,29 +516,7 @@ my $fd = shift;
    push (@response,$response);
    Log ("<< *** Connection timeout ***") if $conn_timed_out;
    Log ("<< $response") if $showIMAP;
-}
-
-#
-#  log out from the host
-#
-sub logout {
-
-my $conn = shift;
-
-   undef @response;
-   sendCommand ($conn, "1 LOGOUT");
-   while ( 1 ) {
-        readResponse ($conn);
-        next if $response =~ /APPEND complete/i;   # Ignore strays
-        if ( $response =~ /^1 OK/i ) {
-           last;
-        } elsif ( $response !~ /^\*/ ) {
-           Log("unexpected logout response $response");
-           last;
-        }
-   }
-   close $conn;
-   return;
+   return $response;
 }
 
 sub selectMbx {
@@ -574,7 +526,7 @@ my $conn = shift;
 
    sendCommand( $conn, "1 SUBSCRIBE \"$mbx\"");
    while ( 1 ) {
-      readResponse( $conn );
+      $response = readResponse( $conn );
       if ( $response =~ /^1 OK/i ) {
          Log("Mailbox $mbx has been subscribed") if $debug;
          last;
@@ -587,7 +539,7 @@ my $conn = shift;
    undef @response;
    $empty=0;
    while ( 1 ) {
-        readResponse ( $conn );
+        $response = readResponse ( $conn );
         if ( $response =~ /^1 OK/i ) {
            # print STDERR "response $response\n";
            last;
@@ -610,7 +562,7 @@ my $conn = shift;
 
    sendCommand ($conn, "1 CREATE \"$mbx\"");
    while ( 1 ) {
-      readResponse ($conn);
+      $response = readResponse ($conn);
       last if $response =~ /^1 OK|already exists /i;
       if ( $response !~ /^\*/ ) {
          if (!($response =~ /already exists|reserved mailbox name/i)) {
@@ -646,7 +598,7 @@ my @mailboxes;
    sendCommand ($conn, "1 LIST \"\" *");
    undef @response;
    while ( 1 ) {
-	readResponse ($conn);
+	$response = readResponse ($conn);
 	if ( $response =~ /^1 OK/i ) {
 		last;
 	}
@@ -715,7 +667,7 @@ my $flags;
    undef @response;
    $empty=0;
    while ( 1 ) {
-	readResponse ( $conn );
+	$response = readResponse ( $conn );
 	if ( $response =~ / 0 EXISTS/i ) { $empty=1; }
 	if ( $response =~ /^1 OK/i ) {
 		# print STDERR "response $response\n";
@@ -738,7 +690,7 @@ my $flags;
    sendCommand ( $conn, "1 FETCH 1:* (uid flags internaldate body[header.fields (From Date)])");
    undef @response;
    while ( 1 ) {
-	readResponse ( $conn );
+	$response = readResponse ( $conn );
 	return if $conn_timed_out;
 	if ( $response =~ /^1 OK/i ) {
 	   last;
@@ -828,7 +780,7 @@ my ($lsn,$lenx);
       sendCommand ($conn, "1 APPEND \"$mbx\" ($flags) \{$lenx\}");
    }
    
-   readResponse ($conn);
+   $response = readResponse ($conn);
    if ($conn_timed_out) {
        Log ("unexpected response timeout appending message");
        push(@errors,"Error appending message to $mbx for $user");
@@ -846,7 +798,7 @@ my ($lsn,$lenx);
 
    undef @response;
    while ( 1 ) {
-       readResponse ($conn);
+       $response = readResponse ($conn);
        if ( $response =~ /^1 OK/i ) {
 	   last;
        }
@@ -869,7 +821,7 @@ my $status = 1;
    #  Determine whether a mailbox exists
    sendCommand ($conn, "1 SELECT \"$mbx\"");
    while (1) {
-        readResponse ($conn);
+        $response = readResponse ($conn);
         last if $response =~ /^1 OK/i;
         if ( $response =~ /^1 NO|^1 BAD|^\* BYE/ ) {
            $status = 0;
@@ -947,7 +899,7 @@ my $loops;
    Log("   Search for $msgid") if $debug;
    sendCommand ( $conn, "1 SEARCH header Message-Id \"$msgid\"");
    while (1) {
-        readResponse ($conn);
+        $response = readResponse ($conn);
         if ( $response =~ /\* SEARCH /i ) {
            ($dmy, $msgnum) = split(/\* SEARCH /i, $response);
            ($msgnum) = split(/ /, $msgnum);
