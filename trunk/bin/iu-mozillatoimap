@@ -178,7 +178,7 @@ my ($lsn,$lenx);
    if ($destMbxs{"$mbx"} eq '') {
 	&sendCommand (IMAP, "$lsn CREATE \"$mbx\"");
 	while ( 1 ) {
-	   &$response = readResponse (IMAP);
+	   $response = readResponse (IMAP);
 	   if ( $response =~ /^$rsn OK/i ) {
 		last;
 	   }
@@ -197,7 +197,7 @@ my ($lsn,$lenx);
 
    # &sendCommand (IMAP, "$lsn APPEND \"$mbx\" ($flags) \"$date\" \{$lenx\}");
    &sendCommand (IMAP, "$lsn APPEND \"$mbx\" \{$lenx\}");
-   &$response = readResponse (IMAP);
+   $response = readResponse (IMAP);
    if ( $response !~ /^\+/ ) {
        &Log ("unexpected APPEND response: $response");
        push(@errors,"Error appending message to $mbx for $user");
@@ -212,7 +212,7 @@ my ($lsn,$lenx);
 
    undef @response;
    while ( 1 ) {
-       &$response = readResponse (IMAP);
+       $response = readResponse (IMAP);
        if ( $response =~ /^$lsn OK/i ) {
 	   last;
        }
@@ -245,7 +245,7 @@ my $msgnum;
    undef @response;
    $empty=0;
    while ( 1 ) {
-	&$response = readResponse ( $conn );
+	$response = readResponse ( $conn );
 	if ( $response =~ / 0 EXISTS/i ) { $empty=1; }
 	if ( $response =~ /^$rsn OK/i ) {
 		last;
@@ -259,7 +259,7 @@ my $msgnum;
    &sendCommand ( $conn, "$rsn FETCH 1:* (uid flags internaldate body[header.fields (Message-Id)])");
    undef @response;
    while ( 1 ) {
-	&$response = readResponse ( $conn );
+	$response = readResponse ( $conn );
 	if ( $response =~ /^$rsn OK/i ) {
 		last;
 	}

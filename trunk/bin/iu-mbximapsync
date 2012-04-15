@@ -180,7 +180,7 @@ my ($lsn,$lenx);
         &Log("creating mailbox $mbx") if $debug;
 	&sendCommand (IMAP, "$lsn CREATE \"$mbx\"");
 	while ( 1 ) {
-	   &$response = readResponse (IMAP);
+	   $response = readResponse (IMAP);
 	   if ( $response =~ /^$rsn OK/i ) {
 		last;
 	   }
@@ -200,7 +200,7 @@ my ($lsn,$lenx);
 
    # &sendCommand (IMAP, "$lsn APPEND \"$mbx\" ($flags) \"$date\" \{$lenx\}");
    &sendCommand (IMAP, "$lsn APPEND \"$mbx\" \{$lenx\}");
-   &$response = readResponse (IMAP);
+   $response = readResponse (IMAP);
    if ( $response !~ /^\+/ ) {
        &Log ("unexpected APPEND response: $response");
        # next;
@@ -212,7 +212,7 @@ my ($lsn,$lenx);
 
    undef @response;
    while ( 1 ) {
-       &$response = readResponse (IMAP);
+       $response = readResponse (IMAP);
        if ( $response =~ /^$lsn OK/i ) {
 	   last;
        }
@@ -246,7 +246,7 @@ my $msgnum;
    undef @response;
    $empty=0;
    while ( 1 ) {
-	&$response = readResponse ( $conn );
+	$response = readResponse ( $conn );
 	if ( $response =~ / 0 EXISTS/i ) { $empty=1; }
 	if ( $response =~ /^$rsn OK/i ) {
 		# print STDERR "response $response\n";
@@ -262,7 +262,7 @@ my $msgnum;
    &sendCommand ( $conn, "$rsn FETCH 1:* (uid flags internaldate body[header.fields (Message-Id)])");
    undef @response;
    while ( 1 ) {
-	&$response = readResponse ( $conn );
+	$response = readResponse ( $conn );
 	if ( $response =~ /^$rsn OK/i ) {
 		# print STDERR "response $response\n";
 		last;
@@ -334,7 +334,7 @@ my $noSuchMbx;
    &Log("Searching for $msgid in $mbx") if $debug;
    &sendCommand ( $conn, "1 SELECT \"$mbx\"");
    while (1) {
-	&$response = readResponse ($conn);
+	$response = readResponse ($conn);
         if ( $response =~ /^1 NO/ ) {
            $noSuchMbx = 1;
            last;
@@ -346,7 +346,7 @@ my $noSuchMbx;
    &Log("Search for $msgid") if $debug;
    &sendCommand ( $conn, "$rsn SEARCH header Message-Id \"$msgid\"");
    while (1) {
-	&$response = readResponse ($conn);
+	$response = readResponse ($conn);
 	if ( $response =~ /\* SEARCH /i ) {
 	   ($dmy, $msgnum) = split(/\* SEARCH /i, $response);
 	   ($msgnum) = split(/ /, $msgnum);
@@ -377,7 +377,7 @@ my $rc;
 
    &sendCommand ( $conn, "1 STORE $msgnum +FLAGS (\\Deleted)");
    while (1) {
-        &$response = readResponse ($conn);
+        $response = readResponse ($conn);
         if ( $response =~ /^1 OK/i ) {
 	   $rc = 1;
 	   &Log("   Marked $msgid for delete");
@@ -404,7 +404,7 @@ my $purged=0;
    &Log("Purging $mbx") if $debug;
    &sendCommand ( $conn, "1 SELECT \"$mbx\"");
    while (1) {
-        &$response = readResponse ($conn);
+        $response = readResponse ($conn);
         last if $response =~ /^1 OK/;
 
 	if ( $response =~ /^1 NO|^1 BAD/i ) {
@@ -415,7 +415,7 @@ my $purged=0;
 
    &sendCommand ( $conn, "1 EXPUNGE");
    while (1) {
-        &$response = readResponse ($conn);
+        $response = readResponse ($conn);
         last if $response =~ /^1 OK/;
         $purged++ if $response =~ /EXPUNGE/i;
 
