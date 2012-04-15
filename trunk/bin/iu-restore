@@ -147,59 +147,6 @@ my $msgs = shift;
 }
 
 #
-#  login in at the IMAP host with the user's name and password
-#
-sub login {
-
-my $user = shift;
-my $pwd  = shift;
-my $conn = shift;
-
-   Log("Logging in as $user") if $debug;
-   $rsn = 1;
-   sendCommand ($conn, "$rsn LOGIN $user $pwd");
-   while (1) {
-	readResponse ( $conn );
-	if ($response =~ /^$rsn OK/i) {
-		last;
-	}
-	elsif ($response =~ /NO/) {
-		Log ("unexpected LOGIN response: $response");
-		return 0;
-	}
-   }
-   Log("Logged in as $user") if $debug;
-
-   return 1;
-}
-
-
-#  logout
-#
-#  log out from the host
-#
-sub logout {
-
-my $conn = shift;
-
-   ++$lsn;
-   undef @response;
-   sendCommand ($conn, "$lsn LOGOUT");
-   while ( 1 ) {
-	readResponse ($conn);
-	if ( $response =~ /^$lsn OK/i ) {
-		last;
-	}
-	elsif ( $response !~ /^\*/ ) {
-		Log ("unexpected LOGOUT response: $response");
-		last;
-	}
-   }
-   close $conn;
-   return;
-}
-
-#
 #  insertMsg
 #
 #  Append a message to an IMAP mailbox
@@ -235,7 +182,7 @@ my ($lsn,$lenx);
    if ($destMbxs{"$mbx"} eq '') {
 	sendCommand ($conn, "$lsn CREATE \"$mbx\"");
 	while ( 1 ) {
-	   readResponse ($conn);
+	   $response = readResponse ($conn);
 	   if ( $response =~ /^$rsn OK/i ) {
 		last;
 	   }
@@ -253,7 +200,7 @@ my ($lsn,$lenx);
 
    $cmd = "1 APPEND \"$mbx\" ($flags) \"$date\" \{$lenx\}\n";
    sendCommand ($conn, "1 APPEND \"$mbx\" ($flags) \"$date\" \{$lenx\}");
-   readResponse ($conn);
+   $response = readResponse ($conn);
    if ( $response !~ /^\+/ ) {
        Log ("unexpected APPEND response to $cmd");
        push(@errors,"Error appending message to $mbx for $user");
@@ -268,7 +215,7 @@ my ($lsn,$lenx);
 
    undef @response;
    while ( 1 ) {
-       readResponse ($conn);
+       $response = readResponse ($conn);
        if ( $response =~ /^$lsn OK/i ) {
 	   last;
        }
@@ -301,7 +248,7 @@ my $msgnum;
    undef @response;
    $empty=0;
    while ( 1 ) {
-	readResponse ( $conn );
+	$response = readResponse ( $conn );
 	if ( $response =~ / 0 EXISTS/i ) { $empty=1; }
 	if ( $response =~ /^$rsn OK/i ) {
 		last;
@@ -315,7 +262,7 @@ my $msgnum;
    sendCommand ( $conn, "$rsn FETCH 1:* (uid flags internaldate body[header.fields (Message-Id)])");
    undef @response;
    while ( 1 ) {
-	readResponse ( $conn );
+	$response = readResponse ( $conn );
 	if ( $response =~ /^$rsn OK/i ) {
 		last;
 	}
@@ -464,7 +411,7 @@ my $mbx_delim = shift;
    @response = ();
    sendCommand( $conn, "1 NAMESPACE");
    while ( 1 ) {
-      readResponse( $conn );
+      $response = readResponse( $conn );
       if ( $response =~ /^1 OK/i ) {
          last;
       } elsif ( $response =~ /^1 NO|^1 BAD|^\* BYE/i ) {
@@ -635,7 +582,7 @@ my $delimiter;
    sendCommand ($conn, '1 LIST "" ""');
    @response = '';
    while ( 1 ) {
-	readResponse ($conn);
+	$response = readResponse ($conn);
 	if ( $response =~ /^1 OK/i ) {
 		last;
 	}

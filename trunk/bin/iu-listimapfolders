@@ -96,95 +96,6 @@ local (*string) = @_;
    return;
 }
 
-
-#  login
-#
-#  login in at the source host with the user's name and password
-#
-sub login {
-
-my $user = shift;
-my $pwd  = shift;
-my $host = shift;
-my $conn = shift;
-my $method = shift;
-
-   if ( uc( $method ) eq 'CRAM-MD5' ) {
-      #  A CRAM-MD5 login is requested
-      my $rc = login_cram_md5( $user, $pwd, $conn );
-      return $rc;
-   }
-
-   #  Otherwise do a PLAIN login
-
-   sendCommand ($conn, "1 LOGIN $user \"$pwd\"");
-   while (1) {
-	readResponse ( $conn );
-	last if $response =~ /^1 OK/i;
-	if ($response =~ /^1 NO|^1 BAD|^\* BYE/i) {
-           return 0;
-	}
-   }
-
-   return 1;
-}
-
-
-sub login_cram_md5 {
-
-my $user = shift;
-my $pwd  = shift;
-my $conn = shift;
-
-   sendCommand ($conn, "1 AUTHENTICATE CRAM-MD5");
-   while (1) {
-        readResponse ( $conn );
-        last if $response =~ /^\+/;
-        if ($response =~ /^1 NO|^1 BAD|^\* BYE/i) {
-           return 0;
-        }
-   }
-
-   my ($challenge) = $response =~ /^\+ (.+)/;
-
-   $response = cram_md5( $challenge, $user, $pwd );
-
-   sendCommand ($conn, $response);
-   while (1) {
-        readResponse ( $conn );
-        last if $response =~ /^1 OK/i;
-        if ($response =~ /^1 NO|^1 BAD|^\* BYE/i) {
-           return 0;
-        }
-   }
-
-   return 1;
-}
-
-#  logout
-#
-#  log out from the host
-#
-sub logout {
-
-my $conn = shift;
-
-   undef @response;
-   sendCommand ($conn, "1 LOGOUT");
-   while ( 1 ) {
-	readResponse ($conn);
-	if ( $response =~ /^1 OK/i ) {
-		last;
-	}
-	elsif ( $response !~ /^\*/ ) {
-		Log ("unexpected LOGOUT response: $response");
-		last;
-	}
-   }
-   close $conn;
-   return;
-}
-
 #  getMailboxList
 #
 #  get a list of the user's mailboxes from the source host
@@ -232,7 +143,7 @@ my $conn = shift;
    sendCommand ($conn, "1 LIST \"\" \"$mbx\"");
    undef @response;
    while ( 1 ) {
-        &readResponse ($conn);
+        &$response = readResponse ($conn);
         if ( $response =~ /^1 OK/i ) {
                 last;
         }
@@ -314,7 +225,7 @@ my $mbx_delim = shift;
    @response = ();
    sendCommand( $conn, "1 NAMESPACE");
    while ( 1 ) {
-      readResponse( $conn );
+      $response = readResponse( $conn );
       if ( $response =~ /^1 OK/i ) {
          last;
       } elsif ( $response =~ /^1 NO|^1 BAD|^\* BYE/i ) {
@@ -502,7 +413,7 @@ my $delimiter;
    sendCommand ($conn, '1 LIST "" ""');
    @response = '';
    while ( 1 ) {
-	readResponse ($conn);
+	$response = readResponse ($conn);
 	if ( $response =~ /^1 OK/i ) {
 		last;
 	}
@@ -612,7 +523,7 @@ my $rc;
 
    sendCommand ( $conn, "1 STORE $msgnum +FLAGS (\\Deleted)");
    while (1) {
-        readResponse ($conn);
+        $response = readResponse ($conn);
         if ( $response =~ /^1 OK/i ) {
 	   $rc = 1;
 	   Log("      Marked msg number $msgnum for delete") if $debug;
@@ -639,14 +550,14 @@ my $conn  = shift;
 
    sendCommand ($conn, "1 SELECT \"$mbx\"");
    while (1) {
-        readResponse ($conn);
+        $response = readResponse ($conn);
         last if ( $response =~ /1 OK/i );
    }
 
    sendCommand ( $conn, "1 EXPUNGE");
    $expunged=0;
    while (1) {
-        readResponse ($conn);
+        $response = readResponse ($conn);
         $expunged++ if $response =~ /\* (.+) Expunge/i;
         last if $response =~ /^1 OK/;
 

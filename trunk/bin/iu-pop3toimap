@@ -216,7 +216,7 @@ my $rc;
 
    sendCommand ($conn, "USER $user" );
    while ( 1 ) {
-        readResponse ($conn);
+        $response = readResponse ($conn);
 	if ( $response =~ /^-ERR/i ) {
 	   Log("Error logging into the POP server as $popUser: $response");
 	   $rc = 0;
@@ -229,7 +229,7 @@ my $rc;
    Log("Send the password") if $debug;
    sendCommand ($conn, "PASS $pwd" );
    while ( 1 ) {
-        readResponse ($conn);
+        $response = readResponse ($conn);
 	if ( $response =~ /^-ERR/i ) {
 	   Log("Error logging into the POP server as $popUser: $response");
 	   $rc = 0;
@@ -259,7 +259,7 @@ my $conn = shift;
    $rsn = 1;
    sendCommand ($conn, "$rsn LOGIN $user $pwd");
    while (1) {
-	readResponse ($conn);
+	$response = readResponse ($conn);
 	if ($response =~ /^$rsn OK/i) {
 		last;
 	}
@@ -285,7 +285,7 @@ my @msgList;
 
    sendCommand ($conn, "LIST" );
    while ( 1 ) {
-	readResponse ($conn);
+	$response = readResponse ($conn);
 
 	next if $response =~ /^\+OK/i;
 	if ( $response =~ /^\-ERR/i ) {
@@ -317,7 +317,7 @@ my $msg;
 
    sendCommand ($conn, "RETR $msgnum" );
    while ( 1 ) {
-        readResponse ($conn);
+        $response = readResponse ($conn);
         # Log("$response");
 
         next if $response =~ /^\+OK/i;
@@ -353,7 +353,7 @@ my $msg;
 
    sendCommand ($conn, "DELE $msgnum" );
    while ( 1 ) {
-        readResponse ($conn);
+        $response = readResponse ($conn);
         Log("$response") if $debug;
 
         last if $response =~ /^\+OK/i;
@@ -368,7 +368,7 @@ my $msg;
 }
 
 
-#  readResponse
+#  $response = readResponse
 #
 #  Read the response from the server on the designated socket.
 #
@@ -435,7 +435,7 @@ local ($rsn,$lenx);
    }
    $cmd =~ s/\s+/ /g;
    sendCommand ($conn, "$cmd");
-   readResponse ($conn);
+   $response = readResponse ($conn);
    if ( $response !~ /^\+/ ) {
        Log ("unexpected APPEND response: $response");
        push(@errors,"Error appending message to $mbx for $user");
@@ -446,7 +446,7 @@ local ($rsn,$lenx);
 
    undef @response;
    while ( 1 ) {
-       readResponse ($conn);
+       $response = readResponse ($conn);
        if ( $response =~ /^$rsn OK/i ) {
 	   last;
        }
@@ -484,7 +484,7 @@ my $conn = shift;
    ++$rsn;
    sendCommand ($conn, "$rsn LOGOUT");
    while ( 1 ) {
-	readResponse ($conn);
+	$response = readResponse ($conn);
 	if ( $response =~ /^$rsn OK/i ) {
 		last;
 	}
@@ -509,7 +509,7 @@ my $conn = shift;
 
    sendCommand ($conn, "QUIT");
    while ( 1 ) {
-	readResponse ($conn);
+	$response = readResponse ($conn);
 	if ( $response =~ /^\+OK/i ) {
 	   last;
 	}
@@ -652,7 +652,7 @@ my $conn = shift;
    
    sendCommand ($conn, "1 CREATE \"$mbx\"");
    while ( 1 ) {
-      readResponse ($conn);
+      $response = readResponse ($conn);
       last if $response =~ /^1 OK/i;
       last if $response =~ /already exists/i;
       if ( $response =~ /^1 NO|^1 BAD|^\* BYE/ ) {
@@ -685,7 +685,7 @@ my @response;
    @response = ();
    sendCommand( $conn, "1 NAMESPACE");
    while ( 1 ) {
-      readResponse( $conn );
+      $response = readResponse( $conn );
       push( @namespace, $response );
       if ( $response =~ /^1 OK/i ) {
          last;
@@ -755,7 +755,7 @@ my $delimiter;
    sendCommand ($conn, '1 LIST "" ""');
    @response = '';
    while ( 1 ) {
-	readResponse ($conn);
+	$response = readResponse ($conn);
 	if ( $response =~ /^1 OK/i ) {
 		last;
 	}
@@ -784,7 +784,7 @@ my $status = 1;
    #  Determine whether a mailbox exists
    sendCommand ($conn, "1 EXAMINE \"$mbx\"");
    while (1) {
-        readResponse ($conn);
+        $response = readResponse ($conn);
         last if $response =~ /^1 OK/i;
         if ( $response =~ /^1 NO|^1 BAD|^\* BYE/ ) {
            $status = 0;
@@ -806,7 +806,7 @@ my $conn = shift;
 
    sendCommand( $conn, "1 SUBSCRIBE \"$mbx\"");
    while ( 1 ) {
-      readResponse( $conn );
+      $response = readResponse( $conn );
       if ( $response =~ /^1 OK/i ) {
          Log("Mailbox $mbx has been subscribed") if $debug;
          last;
@@ -819,7 +819,7 @@ my $conn = shift;
    #  Now select the mailbox
    sendCommand( $conn, "1 SELECT \"$mbx\"");
    while ( 1 ) {
-      readResponse( $conn );
+      $response = readResponse( $conn );
       if ( $response =~ /^1 OK/i ) {
          last;
       } elsif ( $response =~ /^1 NO|^1 BAD|^\* BYE/i ) {

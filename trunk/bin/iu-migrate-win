@@ -133,7 +133,7 @@ my $conn = shift;
    
    &sendCommand ($conn, "1 CREATE \"$mbx\"");
    while ( 1 ) {
-      &readResponse ($conn);
+      &$response = readResponse ($conn);
       last if $response =~ /^$conn OK/i;
       if ( $response !~ /^\*/ ) {
          if (!($response =~ /already exists|reserved mailbox name/i)) {
@@ -162,7 +162,7 @@ local ($lenx);
    $flags =~ s/\\Recent//i;
 
    &sendCommand ($conn, "1 APPEND \"$mbx\" ($flags) \"$date\" \{$lenx\}");
-   &readResponse ($conn);
+   &$response = readResponse ($conn);
    if ( $response !~ /^\+/ ) {
        &Log ("unexpected APPEND response: $response");
        # next;
@@ -174,7 +174,7 @@ local ($lenx);
 
    undef @response;
    while ( 1 ) {
-       &readResponse ($conn);
+       &$response = readResponse ($conn);
        if ( $response =~ /^1 OK/i ) {
 	   last;
        }
@@ -200,58 +200,6 @@ local (*string) = @_;
 
    return;
 }
-
-
-#  login
-#
-#  login in at the host with the user's name and password
-#
-sub login {
-
-my $host = shift;
-my $user = shift;
-my $pwd  = shift;
-my $conn = shift;
-
-   &sendCommand ($conn, "1 LOGIN $user $pwd");
-   while (1) {
-	&readResponse ( $conn );
-	last if $response =~ /^1 OK/i;
-	if ($response =~ /NO|BAD/i) {
-           &Log ("Failed to login at $host as $user.  Check username & password");
-           return 0;
-	}
-   }
-   &Log("Logged in as $user") if $debug;
-
-   return 1;
-}
-
-
-#  logout
-#
-#  log out from the host
-#
-sub logout {
-
-my $conn = shift;
-
-   undef @response;
-   &sendCommand ($conn, "1 LOGOUT");
-   while ( 1 ) {
-	&readResponse ($conn);
-	if ( $response =~ /^1 OK/i ) {
-		last;
-	}
-	elsif ( $response !~ /^\*/ ) {
-		&Log ("unexpected LOGOUT response: $response");
-		last;
-	}
-   }
-   close $conn;
-   return;
-}
-
 
 #  getMailboxList
 #
@@ -282,7 +230,7 @@ my @mailboxes;
    &sendCommand ($conn, "1 LIST \"\" *");
    undef @response;
    while ( 1 ) {
-	&readResponse ($conn);
+	&$response = readResponse ($conn);
 	if ( $response =~ /^1 OK/i ) {
 		last;
 	}
@@ -351,7 +299,7 @@ my $flags;
    undef @response;
    $empty=0;
    while ( 1 ) {
-	&readResponse ( $conn );
+	&$response = readResponse ( $conn );
 	if ( $response =~ / 0 EXISTS/i ) { $empty=1; }
 	if ( $response =~ /^1 OK/i ) {
 		# print STDERR "response $response\n";
@@ -367,7 +315,7 @@ my $flags;
    &sendCommand ( $conn, "1 FETCH 1:* (uid flags internaldate body[header.fields (From Date)])");
    undef @response;
    while ( 1 ) {
-	&readResponse ( $conn );
+	&$response = readResponse ( $conn );
 	if ( $response =~ /^1 OK/i ) {
 		# print STDERR "response $response\n";
 		last;
@@ -424,13 +372,13 @@ my $message;
    &Log("   Fetching msg $msgnum...") if $debug;
    &sendCommand ($conn, "1 EXAMINE \"$mbx\"");
    while (1) {
-        &readResponse ($conn);
+        &$response = readResponse ($conn);
 	last if ( $response =~ /^1 OK/i );
    }
 
    &sendCommand( $conn, "1 FETCH $msgnum (rfc822)");
    while (1) {
-	&readResponse ($conn);
+	&$response = readResponse ($conn);
 	if ( $response =~ /^1 OK/i ) {
 		$size = length($message);
 		last;
@@ -515,7 +463,7 @@ my $conn = shift;
 
    sendCommand( $conn, "1 SUBSCRIBE \"$mbx\"");
    while ( 1 ) {
-      readResponse( $conn );
+      $response = readResponse( $conn );
       if ( $response =~ /^1 OK/i ) {
          Log("Mailbox $mbx has been subscribed") if $debug;
          last;
@@ -528,7 +476,7 @@ my $conn = shift;
    #  Now select the mailbox
    sendCommand( $conn, "1 SELECT \"$mbx\"");
    while ( 1 ) {
-      readResponse( $conn );
+      $response = readResponse( $conn );
       if ( $response =~ /^1 OK/i ) {
          last;
       } elsif ( $response =~ /^1 NO|^1 BAD/i ) {
@@ -551,7 +499,7 @@ my $delimiter = shift;
    @response = ();
    sendCommand( $conn, "1 NAMESPACE");
    while ( 1 ) {
-      readResponse( $conn );
+      $response = readResponse( $conn );
       if ( $response =~ /^1 OK/i ) {
          last;
       } elsif ( $response =~ /NO|BAD/i ) {

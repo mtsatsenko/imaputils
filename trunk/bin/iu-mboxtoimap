@@ -253,59 +253,6 @@ local $_;
     return wantarray ? @mail : \@mail;
 }
 
-#
-#  login in at the source host with the user's name and password
-#
-sub login {
-
-my $user = shift;
-my $pwd  = shift;
-my $conn = shift;
-
-   Log("Logging in as $user") if $debug;
-   $rsn = 1;
-   sendCommand ($conn, "$rsn LOGIN $user $pwd");
-   while (1) {
-	readResponse ( $conn );
-	if ($response =~ /^$rsn OK/i) {
-		last;
-	}
-	elsif ($response =~ /NO/) {
-		Log ("unexpected LOGIN response: $response");
-		return 0;
-	}
-   }
-   Log("Logged in as $user") if $debug;
-
-   return 1;
-}
-
-
-#  logout
-#
-#  log out from the host
-#
-sub logout {
-
-my $conn = shift;
-
-   ++$lsn;
-   undef @response;
-   sendCommand ($conn, "$lsn LOGOUT");
-   while ( 1 ) {
-	readResponse ($conn);
-	if ( $response =~ /^$lsn OK/i ) {
-		last;
-	}
-	elsif ( $response !~ /^\*/ ) {
-		Log ("unexpected LOGOUT response: $response");
-		last;
-	}
-   }
-   close $conn;
-   return;
-}
-
 sub insertMsg {
 
 my $mbx = shift;

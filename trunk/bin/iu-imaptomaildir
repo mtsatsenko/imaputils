@@ -138,60 +138,6 @@ local (*string) = @_;
    return;
 }
 
-
-#  login
-#
-#  login in at the source host with the user's name and password
-#
-sub login {
-
-my $user = shift;
-my $pwd  = shift;
-my $conn = shift;
-
-   sendCommand ($conn, "1 LOGIN $user \"$pwd\"");
-   while (1) {
-	readResponse ( $conn );
-	if ($response =~ /^1 OK/i) {
-		last;
-	}
-	elsif ($response =~ /NO/) {
-		Log ("unexpected LOGIN response: $response");
-		return 0;
-	}
-   }
-   Log("Logged in as $user") if $debug;
-
-   return 1;
-}
-
-
-#  logout
-#
-#  log out from the host
-#
-sub logout {
-
-my $conn = shift;
-
-   ++$lsn;
-   undef @response;
-   sendCommand ($conn, "$lsn LOGOUT");
-   while ( 1 ) {
-	readResponse ($conn);
-	if ( $response =~ /^$lsn OK/i ) {
-		last;
-	}
-	elsif ( $response !~ /^\*/ ) {
-		Log ("unexpected LOGOUT response: $response");
-		last;
-	}
-   }
-   close $conn;
-   return;
-}
-
-
 #  getMailboxList
 #
 #  get a list of the user's mailboxes from the source host
@@ -221,7 +167,7 @@ my @mailboxes;
    sendCommand ($conn, "1 LIST \"\" *");
    undef @response;
    while ( 1 ) {
-	readResponse ($conn);
+	$response = readResponse ($conn);
 	if ( $response =~ /^1 OK/i ) {
            last;
 	}
@@ -292,7 +238,7 @@ my $flags;
    undef @response;
    $empty=0;
    while ( 1 ) {
-	readResponse ( $conn );
+	$response = readResponse ( $conn );
 	if ( $response =~ / 0 EXISTS/i ) { $empty=1; }
 	if ( $response =~ /^1 OK/i ) {
 		last;
@@ -307,7 +253,7 @@ my $flags;
    
    undef @response;
    while ( 1 ) {
-	readResponse ( $conn );
+	$response = readResponse ( $conn );
 	if ( $response =~ /^1 OK/i ) {
 		last;
 	} 
@@ -377,7 +323,7 @@ my ($seen, $empty, @list,$msgid, $rfc822_size);
 
     sendCommand ($conn, "1 $oper \"$mailbox\"");
     while ( 1 ) {
-        readResponse ($conn);
+        $response = readResponse ($conn);
         if ( $response =~ / EXISTS/i) {
             $response =~ /\* ([^EXISTS]*)/;
             # Log("     There are $1 messages in $mailbox");
@@ -401,7 +347,7 @@ my ($seen, $empty, @list,$msgid, $rfc822_size);
     $nums = "";
     sendCommand ($conn, "1 SEARCH SINCE \"$date\"");
     while ( 1 ) {
-	readResponse ($conn);
+	$response = readResponse ($conn);
 	if ( $response =~ /^1 OK/i ) {
 	    last;
 	}
@@ -440,7 +386,7 @@ for $num (@msgList) {
      
      undef @response;
      while ( 1 ) {
-	readResponse   ( $conn );
+	$response = readResponse   ( $conn );
 	if   ( $response =~ /^1 OK/i ) {
 		last;
 	}   
@@ -507,7 +453,7 @@ my $message;
 
    sendCommand( $conn, "1 FETCH $msgnum (rfc822)");
    while (1) {
-	readResponse ($conn);
+	$response = readResponse ($conn);
 	if ( $response =~ /^1 OK/i ) {
 		$size = length($message);
 		last;
@@ -775,7 +721,7 @@ my $mbx_delim = shift;
    @response = ();
    sendCommand( $conn, "1 NAMESPACE");
    while ( 1 ) {
-      readResponse( $conn );
+      $response = readResponse( $conn );
       if ( $response =~ /^1 OK/i ) {
          last;
       } elsif ( $response =~ /^1 NO|^1 BAD|^\* BYE/i ) {

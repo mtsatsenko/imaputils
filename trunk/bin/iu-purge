@@ -109,60 +109,6 @@ local (*string) = @_;
    return;
 }
 
-
-#  login
-#
-#  login in at the source host with the user's name and password
-#
-sub login {
-
-my $user = shift;
-my $pwd  = shift;
-my $conn = shift;
-
-   sendCommand ($conn, "1 LOGIN $user $pwd");
-   while (1) {
-	readResponse ( $conn );
-	if ($response =~ /1 OK/i) {
-		last;
-	}
-        if ($response =~ /^(.+) NO|^(.+) BAD/i) {
-           Log ("unexpected LOGIN response: $response");
-           return 0;
-        }
-   }
-   Log("Logged in as $user") if $debug;
-
-   return 1;
-}
-
-
-#  logout
-#
-#  log out from the host
-#
-sub logout {
-
-my $conn = shift;
-
-   ++$lsn;
-   undef @response;
-   sendCommand ($conn, "$lsn LOGOUT");
-   while ( 1 ) {
-	readResponse ($conn);
-	if ( $response =~ /^$lsn OK/i ) {
-		last;
-	}
-	elsif ( $response !~ /^\*/ ) {
-		Log ("unexpected LOGOUT response: $response");
-		last;
-	}
-   }
-   close $conn;
-   return;
-}
-
-
 #  getMsgList
 #
 #  Get a list of messages in a mailbox
@@ -183,7 +129,7 @@ my $flags;
    undef @response;
    $empty=0;
    while ( 1 ) {
-	readResponse ( $conn );
+	$response = readResponse ( $conn );
 	if ( $response =~ / 0 EXISTS/i ) { $empty=1; }
 	if ( $response =~ /^1 OK/i ) {
 		# print STDERR "response $response\n";
@@ -199,7 +145,7 @@ my $flags;
    sendCommand ( $conn, "1 FETCH 1:* (uid flags internaldate body[header.fields (From Date)])");
    undef @response;
    while ( 1 ) {
-	readResponse ( $conn );
+	$response = readResponse ( $conn );
 	if ( $response =~ /^1 OK/i ) {
 		# print STDERR "response $response\n";
 		last;
@@ -253,13 +199,13 @@ my $message;
    Log("   Fetching msg $msgnum...") if $debug;
    sendCommand ($conn, "1 SELECT \"$mbx\"");
    while (1) {
-        readResponse ($conn);
+        $response = readResponse ($conn);
 	last if ( $response =~ /1 OK/i );
    }
 
    sendCommand( $conn, "1 FETCH $msgnum (rfc822)");
    while (1) {
-	readResponse ($conn);
+	$response = readResponse ($conn);
 	if ( $response =~ /1 OK/i ) {
 		$size = length($message);
 		last;
@@ -338,7 +284,7 @@ my $rc;
 
    sendCommand ( $conn, "1 STORE $msgnum +FLAGS (\\Deleted)");
    while (1) {
-        readResponse ($conn);
+        $response = readResponse ($conn);
         if ( $response =~ /^1 OK/i ) {
 	   $rc = 1;
 	   Log("      Marked msg number $msgnum for delete") if $debug;
@@ -365,14 +311,14 @@ my $conn  = shift;
 
    sendCommand ($conn, "1 SELECT \"$mbx\"");
    while (1) {
-        readResponse ($conn);
+        $response = readResponse ($conn);
         last if ( $response =~ /1 OK/i );
    }
 
    sendCommand ( $conn, "1 EXPUNGE");
    $expunged=0;
    while (1) {
-        readResponse ($conn);
+        $response = readResponse ($conn);
         $expunged++ if $response =~ /\* (.+) Expunge/i;
         last if $response =~ /^1 OK/;
 
@@ -431,7 +377,7 @@ my $mbx;
    sendCommand ($conn, "1 LIST \"\" *");
    undef @response;
    while ( 1 ) {
-	readResponse ($conn);
+	$response = readResponse ($conn);
 	if ( $response =~ /^1 OK/i ) {
 		last;
 	}

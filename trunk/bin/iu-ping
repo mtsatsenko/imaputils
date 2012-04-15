@@ -113,59 +113,6 @@ sub getArgs {
 
 }
 
-#  login
-#
-#  login in at the source host with the user's name and password
-#
-sub login {
-
-my $user = shift;
-my $pwd  = shift;
-my $conn = shift;
-
-   sendCommand ($conn, "1 LOGIN $user $pwd");
-   while (1) {
-	readResponse ($conn);
-	if ($response =~ /^1 OK/i) {
-	   last;
-	}
-	elsif ($response !~ /^\*/) {
-	   print STDOUT "Unexpected login response $response\n";
-	   return 0;
-	}
-   }
-
-   return 1;
-}
-
-
-#  logout
-#
-#  log out from the source host
-#
-sub logout {
-
-my $conn = shift;
-
-   # print STDOUT "Logging out\n" if $debug;
-   sendCommand ($conn, "1 LOGOUT");
-   while ( 1 ) {
-	readResponse ($conn);
-	if ( $response =~ /^1 OK/i ) {
-	   last;
-	}
-	elsif ( $response !~ /^\*/ ) {
-	   print STDOUT "unexpected LOGOUT response: $response\n";
-	   last;
-	}
-   }
-   close $conn;
-
-   return;
-
-}
-
-  
 sub usage {
 
    print STDOUT "\nUsage: iu-ping <args> \n\n";
@@ -187,7 +134,7 @@ my $conn = shift;
 
    sendCommand ($conn, "1 SELECT $mbx");
    while (1) {
-	readResponse ($conn);
+	$response = readResponse ($conn);
 	if ($response =~ /^1 OK/i) {
 	   last;
 	}
@@ -208,7 +155,7 @@ my $conn = shift;
    sendCommand ($conn, "1 LIST \"\" *");
    @response = ();
    while ( 1 ) {
-      readResponse ($conn);
+      $response = readResponse ($conn);
       last if $response =~ /^1 OK/i;
 	
       if ( $response !~ /^\*/ ) {
@@ -249,7 +196,7 @@ my $conn    = shift;
    undef @response;
    $empty=0;
    while ( 1 ) {
-    	readResponse ($conn);
+    	$response = readResponse ($conn);
 
         last if $response =~ /^1 OK/i;
     	
@@ -262,7 +209,7 @@ my $conn    = shift;
    sendCommand ($conn, "1 FETCH 1:* (UID FLAGS)");
    undef @response;
    while ( 1 ) {
-	readResponse ($conn);
+	$response = readResponse ($conn);
     	last if $response =~ /^1 OK/i;
         if ( $response !~ /^\*/ ) {
            print STDOUT "Unexpected response: $response\n";
