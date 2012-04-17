@@ -41,11 +41,11 @@ use IMAP::Utils;
    #  Get list of all messages on the source host by Message-Id
    #
    connectToHost($sourceHost, \$src)    or exit;
-   login($sourceUser,$sourcePwd, $sourceHost,$src)  or exit;
+   login($sourceUser,$sourcePwd, $src)  or exit;
    namespace( $src, \$srcPrefix, \$srcDelim, $opt_x );
 
    connectToHost( $destHost, \$dst ) or exit;
-   login( $destUser,$destPwd, $destHost, $dst ) or exit;
+   login( $destUser,$destPwd, $dst ) or exit;
    namespace( $dst, \$dstPrefix, \$dstDelim, $opt_y );
 
    #  Create mailboxes on the dst if they don't already exist

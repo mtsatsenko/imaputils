@@ -774,22 +774,6 @@ my $conn = shift;
 
 }
 
-#  Handle signals
-
-sub signalHandler {
-
-my $sig = shift;
-
-   if ( $sig eq 'ALRM' ) {
-      Log("Caught a SIG$sig signal, timeout error");
-      $conn_timed_out = 1;
-   } else {
-      Log("Caught a SIG$sig signal, shutting down");
-      exit;
-   }
-   Log("Resuming");
-}
-
 sub fixup_date {
 
 my $date = shift;

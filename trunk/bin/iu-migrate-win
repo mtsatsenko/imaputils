@@ -41,11 +41,11 @@ foreach $user ( @users ) {
    #  Get list of all messages on the source host
    #
    next unless &connectToHost($sourceHost,\$src);
-   next unless &login($sourceHost,$sourceUser,$sourcePwd,$src);
+   next unless &login($sourceUser,$sourcePwd,$src);
    namespace( $src, \$srcPrefix, \$srcDelim );
 
    next unless &connectToHost( $destHost, \$dst );
-   next unless &login( $destHost,$destUser,$destPwd, $dst );
+   next unless &login($destUser,$destPwd, $dst );
    namespace( $dst, \$dstPrefix, \$dstDelim );
 
    @mbxs = &getMailboxList($sourceUser, $src);

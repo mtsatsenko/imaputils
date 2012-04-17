@@ -5,7 +5,7 @@
 package IMAP::Utils;
 require Exporter;
 @ISA = qw(Exporter);
-@EXPORT= qw(Log openLog connectToHost readResponse sendCommand signalHandler logout login);
+@EXPORT= qw(Log openLog connectToHost readResponse sendCommand signalHandler logout login conn_timed_out);
 
 #  Open the logFile
 #
@@ -192,11 +192,10 @@ sub login {
 
 my $user = shift;
 my $pwd  = shift;
-my $host = shift;
 my $conn = shift;
 my $method = shift or 'LOGIN';
 
-   Log("Authenticating to $host as $user");
+   Log("Authenticating as $user");
    if ( uc( $method ) eq 'CRAM-MD5' ) {
       #  A CRAM-MD5 login is requested
       Log("login method $method");
@@ -293,6 +292,21 @@ my $sig = shift;
       Log("Caught a SIG$sig signal, shutting down");
       exit;
    }
+   Log("Resuming");
+}
+
+#  Determine whether a string contains non-ASCII characters
+sub isAscii {
+
+my $str = shift;
+my $ascii = 1;
+
+   my $test = $str;
+   $test=~s/\P{IsASCII}/?/g;
+   $ascii = 0 unless $test eq $str;
+
+   return $ascii;
+
 }
 
 1;

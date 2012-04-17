@@ -20,7 +20,7 @@ use IMAP::Utils;
    init();
 
    connectToHost($sourceHost, \$src)   or exit;
-   login($sourceUser,$sourcePwd, $sourceHost, $src, $srcMethod) or exit;
+   login($sourceUser,$sourcePwd, $src, $srcMethod) or exit;
    namespace( $src, \$srcPrefix, \$srcDelim, $opt_x );
    @mbxs = getMailboxList( $srcPrefix, $src );
 
@@ -994,10 +994,10 @@ my $conn = shift;
    close $dst;
 
    connectToHost($shost,\$src);
-   login($suser,$spwd,$shost,$src);
+   login($suser,$spwd,$src);
 
    connectToHost($dhost,\$dst);
-   login($duser,$dpwd,$dhost,$dst);
+   login($duser,$dpwd,$dst);
 
    selectMbx( $mbx, $src );
    createMbx( $mbx, $dst );   # Just in case

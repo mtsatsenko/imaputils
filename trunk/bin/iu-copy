@@ -43,11 +43,11 @@ use IMAP::Utils;
    #  Get list of all messages on the source host
    #
    connectToHost($sourceHost, \$src)   or exit;
-   login($sourceUser,$sourcePwd, $sourceHost, $src, $srcMethod) or exit;
+   login($sourceUser,$sourcePwd, $src, $srcMethod) or exit;
    namespace( $src, \$srcPrefix, \$srcDelim, $opt_x );
 
    connectToHost( $destHost, \$dst ) or exit;
-   login( $destUser,$destPwd, $destHost, $dst, $dstMethod ) or exit;
+   login( $destUser,$destPwd, $dst, $dstMethod ) or exit;
    namespace( $dst, \$dstPrefix, \$dstDelim, $opt_y );
 
    @mbxs = getMailboxList( $srcPrefix, $src );
@@ -1279,30 +1279,14 @@ my $conn = shift;
    close $dst;
 
    connectToHost($shost,\$src);
-   login($suser,$spwd,$shost,$src);
+   login($suser,$spwd,$src);
 
    connectToHost($dhost,\$dst);
-   login($duser,$dpwd,$dhost,$dst);
+   login($duser,$dpwd,$dst);
 
    selectMbx( $mbx, $src );
    createMbx( $mbx, $dst );   # Just in case
 
-}
-
-#  Handle signals
-
-sub signalHandler {
-
-my $sig = shift;
-
-   if ( $sig eq 'ALRM' ) {
-      Log("Caught a SIG$sig signal, timeout error");
-      $conn_timed_out = 1;
-   } else {
-      Log("Caught a SIG$sig signal, shutting down");
-      exit;
-   }
-   Log("Resuming");
 }
 
 sub fixup_date {
@@ -1520,12 +1504,12 @@ sub resume {
 
    Log("Reconnect to source server and log back in");
    connectToHost($sourceHost, \$src)   or exit;
-   login($sourceUser,$sourcePwd, $sourceHost, $src, $srcMethod) or exit;
+   login($sourceUser,$sourcePwd, $src, $srcMethod) or exit;
    selectMbx( $mbx, $src );
 
    Log("Reconnect to destination server and log back in");
    connectToHost( $destHost, \$dst ) or exit;
-   login( $destUser,$destPwd, $destHost, $dst, $dstMethod ) or exit;
+   login( $destUser,$destPwd, $dst, $dstMethod ) or exit;
    Log("Resuming");
 
    #  Just in case we were creating a mailbox when the connection
