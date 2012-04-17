@@ -192,18 +192,3 @@ my $conn = shift;
 
    return @mbxs;
 }
-
-sub isAscii {
-
-my $str = shift;
-my $ascii = 1;
-
-   #  Determine whether a string contains non-ASCII characters
-
-   my $test = $str;
-   $test=~s/\P{IsASCII}/?/g;
-   $ascii = 0 unless $test eq $str;
-
-   return $ascii;
-
-}
