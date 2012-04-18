@@ -854,7 +854,7 @@ sub processArgs {
       usage();
       exit 0;
    }
-   if (! $opt_S and ! $opt_D) {
+   if (! $opt_S or ! $opt_D) {
       usage();
       exit 0;
    }
