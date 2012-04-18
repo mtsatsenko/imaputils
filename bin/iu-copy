@@ -852,6 +852,11 @@ sub processArgs {
 
    if ( !getopts( "dS:D:L:m:hIp:M:rqx:y:e:Rt:Tia:b:X:vP:A:UB:E:" ) ) {
       usage();
+      exit 0;
+   }
+   if (! $opt_S and ! $opt_D) {
+      usage();
+      exit 0;
    }
    if ( $opt_S =~ /\\/ ) {
       ($sourceHost, $sourceUser, $sourcePwd,$srcMethod) = split(/\\/, $opt_S);
