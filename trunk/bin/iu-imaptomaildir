@@ -28,6 +28,7 @@ use Fcntl;
 use Getopt::Std;
 use File::Path;
 use Time::HiRes;
+use File::Path qw(make_path);
 use IMAP::Utils;
 
 #################################################################
@@ -680,16 +681,10 @@ my @subdirs = qw( new cur tmp );
 
    Log("Create the directories for the $folder folder");
 
-   my $stat = `mkdir -p "$folder" 2&>1`;
-   if ( $stat ) {
-      Log("Error creating $folder:  $stat");
-      exit;
-   }
-
    foreach my $subdir ( @subdirs ) {
-      my $stat = `mkdir -p "$folder/$subdir" 2&>1`;
-      if ( $stat ) {
-         Log("Error creating $folder:  $stat");
+      my $stat = scalar make_path("$folder/$subdir");
+      if ( ! $stat ) {
+         Log("Error creating $folder/$subdir:  $!");
          exit;
       }
    }
