@@ -1400,39 +1400,6 @@ my $conn  = shift;
 
 }
 
-sub cram_md5 {
-
-my $challenge = shift;
-my $user      = shift;
-my $password  = shift;
-
-eval 'use Digest::HMAC_MD5 qw(hmac_md5_hex)'; 
-use MIME::Base64 qw(decode_base64 encode_base64); 
-
-   # Adapated from script by Paul Makepeace <http://paulm.com>, 2002-10-12 
-   # Takes user, key, and base-64 encoded challenge and returns base-64 
-   # encoded CRAM. See, 
-   # IMAP/POP AUTHorize Extension for Simple Challenge/Response: 
-   # RFC 2195 http://www.faqs.org/rfcs/rfc2195.html 
-   # SMTP Service Extension for Authentication: 
-   # RFC 2554 http://www.faqs.org/rfcs/rfc2554.html 
-   # Args: tim tanstaaftanstaaf PDE4OTYuNjk3MTcwOTUyQHBvc3RvZmZpY2UucmVzdG9uLm1jaS5uZXQ+ 
-   # should yield: dGltIGI5MTNhNjAyYzdlZGE3YTQ5NWI0ZTZlNzMzNGQzODkw 
-
-   my $challenge_data = decode_base64($challenge); 
-   my $hmac_digest = hmac_md5_hex($challenge_data, $password); 
-   my $response = encode_base64("$user $hmac_digest"); 
-   chomp $response;
-
-   if ( $debug ) {
-      Log("Challenge: $challenge_data");
-      Log("HMAC digest: $hmac_digest"); 
-      Log("CRAM Base64: $response");
-   }
-
-   return $response;
-}
-
 sub validate_date {
 
 my $date = shift;
@@ -1485,10 +1452,7 @@ my $rc;
 
    return $rc;
 
-
-
 }
-
 
 sub resume {
 
