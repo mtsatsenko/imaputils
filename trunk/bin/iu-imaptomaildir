@@ -71,7 +71,7 @@ use IMAP::Utils;
 
         $folder = get_folder_name( $maildir, $dstmbx, $delimiter, $prefix );
 
-        build_folder( $folder, $username ) if !-d $folder;
+        build_folder( $folder, $username ) if !-d $folder or $folder eq $maildir;
         Log("folder $folder") if $debug;
         my $i = $#msgs + 1;
         my $msgnums;
@@ -326,7 +326,7 @@ my ($seen, $empty, @list,$msgid, $rfc822_size);
         $response = readResponse ($conn);
         if ( $response =~ / EXISTS/i) {
             $response =~ /\* ([^EXISTS]*)/;
-            # Log("     There are $1 messages in $mailbox");
+            #Log("     There are $1 messages in $mailbox");
         } elsif ( $response =~ /^1 OK/i ) {
             last;
         } elsif ( $response =~ /^1 NO/i ) {
@@ -504,7 +504,7 @@ my $message;
 sub usage {
 
    print STDOUT "usage:\n";
-   print STDOUT " iu-imaptomaildir -S Host/User/Password -u <user> -M <maildir>\n";
+   print STDOUT " iu-imaptomaildir -S Host/User/Password -u <user> -g <group> -M <maildir>\n";
    print STDOUT " <dir> is the file directory to write the message structure\n";
    print STDOUT " Optional arguments:\n";
    print STDOUT "          -d debug\n";
@@ -518,7 +518,7 @@ sub usage {
 
 sub processArgs {
 
-   if ( !getopts( "dS:L:mu:M::hf:F:Ia:x" ) ) {
+   if ( !getopts( "dS:L:mu:g:M::hf:F:Ia:x" ) ) {
       usage();
    }
 
@@ -528,7 +528,8 @@ sub processArgs {
       ($sourceHost, $sourceUser, $sourcePwd) = split(/\//, $opt_S);
    }
 
-   $username   = $opt_u;
+   $userid   = scalar getpwnam($opt_u) or -1;
+   $groupid   = scalar getpwnam($opt_g) or -1;
    $maildir    = $opt_M;
    $mbxList    = $opt_m;
    $logfile    = $opt_L;
@@ -536,7 +537,7 @@ sub processArgs {
    $showIMAP   = 1 if $opt_I;
    $sent_after = $opt_a;
 
-   if ( !$maildir or !$username ) {
+   if ( !$maildir ) {
       print "You must specify the username and the directory where the user's Maildir is located\n";
       print "For example:  -u rick -M /mhub4/rick/Maildir.\n";
       usage();
@@ -693,9 +694,9 @@ my @subdirs = qw( new cur tmp );
       }
    }
 
-   my $stat = `chown -R $username "$folder" 2&>1`;
+   my $stst = chown $userid, $groupid, $folder if $opt_u and $opt_g;   # Set ownership
    if ( $stat ) {
-      Log("Failed to chown $username for $folder: $stat");
+      Log("Failed to chown $username for $folder: $!");
       exit;
    }
 
