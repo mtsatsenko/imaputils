@@ -406,8 +406,12 @@ sub processArgs {
 
    if ( !getopts( "dS:L:Im:hpuM:HF:" ) ) {
       usage();
+      exit 0;
    }
-
+   if (! $opt_S) {
+      usage();
+      exit 0;
+   }
    ($host,$user,$pwd) = split(/\//, $opt_S);
    $mbxList  = $opt_m;
    $logfile  = $opt_L;
