@@ -5,7 +5,7 @@
 package IMAP::Utils;
 require Exporter;
 @ISA = qw(Exporter);
-@EXPORT= qw(Log openLog connectToHost readResponse sendCommand signalHandler logout login conn_timed_out);
+@EXPORT= qw(Log openLog connectToHost readResponse sendCommand signalHandler logout login conn_timed_out getDelimiter @response);
 
 #  Open the logFile
 #
@@ -341,5 +341,37 @@ my $ascii = 1;
    return $ascii;
 
 }
+
+sub getDelimiter  {
+
+my $conn = shift;
+my $delimiter;
+
+   #  Issue a 'LIST "" ""' command to find out what the
+   #  mailbox hierarchy delimiter is.
+
+   sendCommand ($conn, '1 LIST "" ""');
+   @response = '';
+   while ( 1 ) {
+        $response = readResponse ($conn);
+        if ( $response =~ /^1 OK/i ) {
+                last;
+        }
+        elsif ( $response !~ /^\*/ ) {
+                Log ("unexpected response: $response");
+                return 0;
+        }
+   }
+
+   for $i (0 .. $#response) {
+        $response[$i] =~ s/\s+/ /;
+        if ( $response[$i] =~ /\* LIST \((.*)\) "(.*)" "(.*)"/i ) {
+           $delimiter = $2;
+        }
+   }
+
+   return $delimiter;
+}
+
 
 1;
