@@ -162,7 +162,7 @@ sub sendCommand {
     my $cmd = shift;
 
     print $fd "$cmd\r\n";
-    if ($showIMAP) { Log (">> $cmd",2); }
+    if ($debug) { Log (">> $cmd",2); }
 }
 #
 #  readResponse
@@ -180,7 +180,7 @@ sub readResponse {
     chop $response;
     $response =~ s/\r//g;
     push (@response,$response);
-    if ($showIMAP) { Log ("<< $response",2); }
+    if ($debug) { Log ("<< $response",2); }
     return $response;
 }
 
@@ -373,5 +373,32 @@ my $delimiter;
    return $delimiter;
 }
 
+sub hash {
+use Digest::MD5 qw(md5_hex);
+my $msg = shift;
+my $body;
+my $boundary;
+
+   #  Generate an MD5 hash of the message body
+
+   #  Strip the header and the MIME boundary markers
+   my $header = 1;
+   foreach $_ ( split(/\n/, $$msg ) ) {
+      if ( $header ) {
+         if (/boundary="(.+)"/i ) {
+            $boundary = $1;
+         }
+         $header = 0 if length( $_ ) == 1;
+      }
+
+      next if /$boundary/;
+      $body .= "$_\n" unless $header;
+   }
+
+   my $md5 = md5_hex($body);
+   Log("md5 hash $md5") if $debug;
+
+   return $md5;
+}
 
 1;
