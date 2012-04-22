@@ -381,19 +381,6 @@ my $msgnum;
    }
 }
 
-#  trim
-#
-#  remove leading and trailing spaces from a string
-sub trim {
-
-local (*string) = @_;
-
-   $string =~ s/^\s+//;
-   $string =~ s/\s+$//;
-
-   return;
-}
-
 sub namespace {
 
 my $conn      = shift;
