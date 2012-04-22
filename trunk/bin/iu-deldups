@@ -147,19 +147,6 @@ sub init {
 
 }
 
-#  trim
-#
-#  remove leading and trailing spaces from a string
-sub trim {
- 
-local (*string) = @_;
-
-   $string =~ s/^\s+//;
-   $string =~ s/\s+$//;
-
-   return;
-}
-
 #  getMailboxList
 #
 #  get a list of the user's mailboxes from the host

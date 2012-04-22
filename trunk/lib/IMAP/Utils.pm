@@ -5,7 +5,7 @@
 package IMAP::Utils;
 require Exporter;
 @ISA = qw(Exporter);
-@EXPORT= qw(Log openLog connectToHost readResponse sendCommand signalHandler logout login conn_timed_out getDelimiter @response hash);
+@EXPORT= qw(Log openLog connectToHost readResponse sendCommand signalHandler logout login conn_timed_out getDelimiter @response hash trim);
 
 #  Open the logFile
 #
@@ -180,6 +180,7 @@ sub readResponse {
     chop $response;
     $response =~ s/\r//g;
     push (@response,$response);
+    Log ("<< *** Connection timeout ***") if $conn_timed_out;
     if ($debug) { Log ("<< $response",2); }
     return $response;
 }
@@ -373,13 +374,12 @@ my $delimiter;
    return $delimiter;
 }
 
+#  Generate an MD5 hash of the message body
 sub hash {
 use Digest::MD5 qw(md5_hex);
 my $msg = shift;
 my $body;
 my $boundary;
-
-   #  Generate an MD5 hash of the message body
 
    #  Strip the header and the MIME boundary markers
    my $header = 1;
@@ -399,6 +399,19 @@ my $boundary;
    Log("md5 hash $md5") if $debug;
 
    return $md5;
+}
+
+#  trim
+#
+#  remove leading and trailing spaces from a string
+sub trim {
+
+local (*string) = @_;
+
+   $string =~ s/^\s+//;
+   $string =~ s/\s+$//;
+
+   return;
 }
 
 1;
