@@ -295,10 +295,6 @@ sub init {
    $timeout = 300 unless $timeout;
    $maxChildren = 2 unless $maxChildren;
 
-   if ( $md5_hash ) {
-      use Digest::MD5 qw(md5_hex);
-   }
-
    IMAP::Utils::init();
    $logfile = "migrateIMAP.log" unless $logfile;
    if ( -e $logfile ) {
@@ -1346,18 +1342,6 @@ my $newflags;
 
     return $newflags;
 
-}
-
-sub hash {
-
-my $body = shift;
-
-   #  Generate an MD5 hash of the message body
-
-   my $md5 = md5_hex($$body);
-   Log("   md5 hash $md5") if $debug;
-
-   return $md5;
 }
 
 sub fetch_msg_body {
