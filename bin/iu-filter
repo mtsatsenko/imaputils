@@ -294,10 +294,9 @@ my $remhosts = shift;
          next if $COPY_ONLY{"$srcmbx|$dstmbx|$msgnum"};
          $msg_list .= "$msgnum,";
       }
-      chop $msg_list;
-          
-      deleteMsgs( $msg_list, $srcmbx,  $srcconn ) if $moved;
-
+      chop $msg_list;    
+      deleteMsg( $msg_list, $conn ) if $moved;
+      expungeMbx( $scrmbx, $srcconn );
       Log("   Moved $moved message(s) from $srcmbx to $dstmbx");
    }
 }
@@ -622,38 +621,6 @@ my $moved=0;
    }
 
    return $moved;
-}
-
-sub deleteMsgs {
-
-my $msglist = shift;
-my $mbx  = shift;
-my $conn = shift;
-my $rc;
-
-   return if $msglist eq '';
-
-   Log("Send select command for $mbx") if $debug;
-   sendCommand ($conn, "1 SELECT \"$mbx\"");
-   while (1) {
-        $response = readResponse ($conn);
-        last if ( $response =~ /^1 OK/i );
-        last if $response=~ /^1 NO|^1 BAD/;
-   }
-
-   sendCommand ( $conn, "1 STORE $msglist +FLAGS (\\Deleted)");
-   while (1) {
-        $response = readResponse ($conn);
-        if ( $response =~ /^1 NO|^1 BAD/ ) {
-	   Log("Error setting \Deleted flags");
-           Log("Unexpected STORE response: $response");
-           return 0;
-        }
-        last if $response =~ /^1 OK/i;
-   }
-
-   expungeMbx( $mbx, $conn );
-
 }
 
 sub expungeMbx {

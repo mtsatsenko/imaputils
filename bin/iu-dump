@@ -88,10 +88,14 @@ use IMAP::Utils;
              close M;
              $added++;
  
-             $msgnums .= "$msgnum ";
+             $msgnums .= "$msgnum,";
         }
-        deleteMsg( $conn, $msgnums, $mbx ) if $remove_msgs; 
-        expungeMbx( $conn, $mbx )          if $remove_msgs;
+	
+        if ($remove_msgs) {
+           chop $msgnums;
+           deleteMsg( $msgnums, $conn );
+           expungeMbx( $conn, $mbx );
+	}
    }
 
    logout( $conn );
@@ -577,37 +581,6 @@ my $msgnum;
 
    return $msgnum;
 }
-
-sub deleteMsg {
-
-my $conn    = shift;
-my $msgnums = shift;
-my $mbx     = shift;
-my $rc;
-
-   $msgnums =~ s/\s+$//;
-
-   foreach my $msgnum ( split(/\s+/, $msgnums) ) {
-      sendCommand ( $conn, "1 STORE $msgnum +FLAGS (\\Deleted)");
-      while (1) {
-        $response = readResponse ($conn);
-        if ( $response =~ /^1 OK/i ) {
-	   $rc = 1;
-	   Log("   Marked msgnum $msgnum for delete");
-	   last;
-	}
-
-	if ( $response =~ /^1 BAD|^1 NO/i ) {
-	   Log("Error setting \\Deleted flag for msg $msgnum: $response");
-	   $rc = 0;
-	   last;
-	}
-      }
-   }
-
-   return $rc;
-}
-
 
 sub expungeMbx {
 
