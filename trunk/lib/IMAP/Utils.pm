@@ -5,7 +5,7 @@
 package IMAP::Utils;
 require Exporter;
 @ISA = qw(Exporter);
-@EXPORT= qw(Log openLog connectToHost readResponse sendCommand signalHandler logout login conn_timed_out getDelimiter @response hash trim);
+@EXPORT= qw(Log openLog connectToHost readResponse sendCommand signalHandler logout login conn_timed_out getDelimiter @response hash trim deleteMsg isAscii);
 
 #  Open the logFile
 #
@@ -412,6 +412,37 @@ local (*string) = @_;
    $string =~ s/\s+$//;
 
    return;
+}
+
+###
+#deleteMsgs
+#  Mark a message for deletion by setting \Deleted flag
+sub deleteMsg {
+
+my $msgnum = shift;
+my $conn   = shift;
+my $rc;
+
+   return if $msgnum eq '';
+
+   sendCommand ( $conn, "1 STORE $msgnum +FLAGS (\\Deleted)");
+   while (1) {
+        $response = readResponse ($conn);
+        if ( $response =~ /^1 OK/i ) {
+           $rc = 1;
+           Log("       Marked msg number $msgnum for delete");
+           last;
+        }
+
+        if ( $response =~ /^1 BAD|^1 NO/i ) {
+           Log("Error setting \Deleted flag for msg $msgnum: $response");
+           $rc = 0;
+           last;
+        }
+   }
+
+   return $rc;
+
 }
 
 1;

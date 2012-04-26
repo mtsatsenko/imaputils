@@ -71,7 +71,8 @@ use IMAP::Utils;
    &getMsgList( $mbx, \@imapMsgs, 'IMAP' );
    foreach $msgid ( @imapMsgs ) {
       if ( $mailfileMsgs{"$msgid"} eq '' ) {
-         if ( &deleteMsg($msgid, $mbx, 'IMAP') ) {
+         $msgnum = &findMsg( $msgid, $mbx, 'IMAP' );
+         if ( &deleteMsg($msgnum, 'IMAP') ) {
             &Log("   Marked $msgid for deletion");
             print STDOUT "   Marked msgid $msgid for deletion\n";
             $deleted++;
@@ -349,36 +350,6 @@ my $noSuchMbx;
    }
 
    return $msgnum;
-}
-
-sub deleteMsg {
-
-my $msgid = shift;
-my $mbx   = shift;
-my $conn  = shift;
-my $rc;
-
-   &Log("Deleting message $msgid") if $debug;
-   $msgnum = &findMsg( $msgid, $mbx, $conn );
-
-   &sendCommand ( $conn, "1 STORE $msgnum +FLAGS (\\Deleted)");
-   while (1) {
-        $response = readResponse ($conn);
-        if ( $response =~ /^1 OK/i ) {
-	   $rc = 1;
-	   &Log("   Marked $msgid for delete");
-	   last;
-	}
-
-	if ( $response =~ /^1 BAD|^1 NO/i ) {
-	   &Log("Error setting \Deleted flag for msg $msgnum: $response");
-	   $rc = 0;
-	   last;
-	}
-   }
-
-   return $rc;
-
 }
 
 sub expungeMbx {

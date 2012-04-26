@@ -263,32 +263,6 @@ sub processArgs {
 
 }
 
-sub deleteMsg {
-
-my $msgnum = shift;
-my $conn   = shift;
-my $rc;
-
-   sendCommand ( $conn, "1 STORE $msgnum +FLAGS (\\Deleted)");
-   while (1) {
-        $response = readResponse ($conn);
-        if ( $response =~ /^1 OK/i ) {
-	   $rc = 1;
-	   Log("      Marked msg number $msgnum for delete") if $debug;
-	   last;
-	}
-
-	if ( $response =~ /^1 BAD|^1 NO/i ) {
-	   Log("Error setting \Deleted flag for msg $msgnum: $response");
-	   $rc = 0;
-	   last;
-	}
-   }
-
-   return $rc;
-
-}
-
 sub expungeMbx {
 
 my $mbx   = shift;
