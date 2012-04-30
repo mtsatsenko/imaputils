@@ -898,17 +898,17 @@ my $conn = shift;
    #  all mailboxes.  The user must manually subscribe to them.  This routine
    #  does that for the user by marking the mailbox as 'subscribed'.
 
-   sendCommand( $conn, "1 SUBSCRIBE \"$mbx\"");
-   while ( 1 ) {
-      $response = readResponse( $conn );
-      if ( $response =~ /^1 OK/i ) {
-         Log("Mailbox $mbx has been subscribed") if $debug;
-         last;
-      } elsif ( $response =~ /^1 NO|^1 BAD|\^* BYE/i ) {
-         Log("Unexpected response to subscribe $mbx command: $response");
-         last;
-      }
-   }
+   #sendCommand( $conn, "1 SUBSCRIBE \"$mbx\"");
+   #while ( 1 ) {
+   #   $response = readResponse( $conn );
+   #   if ( $response =~ /^1 OK/i ) {
+   #      Log("Mailbox $mbx has been subscribed") if $debug;
+   #      last;
+   #   } elsif ( $response =~ /^1 NO|^1 BAD|\^* BYE/i ) {
+   #      Log("Unexpected response to subscribe $mbx command: $response");
+   #      last;
+   #   }
+   #}
 
    #  Now select the mailbox
    sendCommand( $conn, "1 SELECT \"$mbx\"");
