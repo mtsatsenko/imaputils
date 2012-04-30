@@ -70,34 +70,6 @@ sub init {
 
 }
 
-#
-#  sendCommand
-#
-#  This subroutine formats and sends an IMAP protocol command to an
-#  IMAP server on a specified connection.
-#
-
-sub createMbx {
-
-my $mbx  = shift;
-my $conn = shift;
-
-   #  Create the mailbox if necessary
-   
-   sendCommand ($conn, "1 CREATE \"$mbx\"");
-   while ( 1 ) {
-      $response = readResponse ($conn);
-      last if $response =~ /^1 OK/i;
-      last if $response =~ /already exists/i;
-      if ( $response =~ /^1 NO|^1 BAD|^\* BYE/ ) {
-         Log ("Error creating $mbx: $response");
-         last;
-      }
-      
-   } 
-
-}
-
 #  insertMsg
 #
 #  This routine inserts a message into a user's mailbox

@@ -756,26 +756,6 @@ local ($lsn,$lenx);
    return;
 }
 
-sub createMbx {
-
-my $mbx = shift;
-my $conn = shift;
-
-   #  Create a mailbox
-
-   sendCommand ($conn, "1 CREATE \"$mbx\"");
-   while ( 1 ) {
-      $response = readResponse ($conn);
-      last if $response =~ /^1 OK|already exists /i;
-      if ( $response !~ /^\*/ ) {
-         if (!($response =~ /already exists|reserved mailbox name/i)) {
-            # Log ("WARNING: $response");
-         }
-         last;
-      }
-   }
-}
-
 sub formatBytes {
 
 my $bytes = shift;

@@ -508,38 +508,3 @@ my $status = 1;
 
    return $status;
 }
-
-sub createMbx {
-
-my $mbx  = shift;
-my $conn = shift;
-
-   #  Create the mailbox if necessary
-   
-   sendCommand ($conn, "1 CREATE \"$mbx\"");
-   while ( 1 ) {
-      readResponse ($conn);
-      last if $response =~ /^1 OK/i;
-      last if $response =~ /already exists/i;
-      if ( $response =~ /^1 NO|^1 BAD|^\* BYE/ ) {
-         Log ("Error creating $mbx: $response");
-         last;
-      }
-      
-   } 
-
-   #  Subcribe to it.
-
-   sendCommand( $conn, "1 SUBSCRIBE \"$mbx\"");
-   while ( 1 ) {
-      readResponse( $conn );
-      if ( $response =~ /^1 OK/i ) {
-         Log("Mailbox $mbx has been subscribed") if $debug;
-         last;
-      } elsif ( $response =~ /^1 NO|^1 BAD|\^* BYE/i ) {
-         Log("Unexpected response to subscribe $mbx command: $response");
-         last;
-      }
-   }
-
-}

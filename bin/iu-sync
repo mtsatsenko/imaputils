@@ -457,31 +457,6 @@ for $num (@msgList) {
    return 1;
 }
 
-sub createMbx {
-
-my $mbx  = shift;
-my $conn = shift;
-my $created;
-
-   #  Create the mailbox if necessary
-
-   sendCommand ($conn, "1 CREATE \"$mbx\"");
-   while ( 1 ) {
-      $response = readResponse ($conn);
-      if ( $response =~ /^1 OK/i ) {
-         $created = 1;
-         last;
-      }
-      last if $response =~ /already exists/i;
-      if ( $response =~ /^1 NO|^1 BAD/ ) {
-         Log ("Error creating $mbx: $response");
-         last;
-      }
-
-   }
-   Log("Created mailbox $mbx") if $created;
-}
-
 sub fetchMsg {
 
 my $msgnum = shift;

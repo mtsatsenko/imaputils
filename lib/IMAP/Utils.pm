@@ -5,7 +5,7 @@
 package IMAP::Utils;
 require Exporter;
 @ISA = qw(Exporter);
-@EXPORT= qw(Log openLog connectToHost readResponse sendCommand signalHandler logout login conn_timed_out getDelimiter @response hash trim deleteMsg isAscii);
+@EXPORT= qw(Log openLog connectToHost readResponse sendCommand signalHandler logout login conn_timed_out getDelimiter @response hash trim deleteMsg isAscii createMbx);
 
 #  Open the logFile
 #
@@ -443,6 +443,45 @@ my $rc;
 
    return $rc;
 
+}
+
+#  Create the mailbox if necessary
+sub createMbx {
+
+my $mbx  = shift;
+my $conn = shift;
+
+   sendCommand ($conn, "1 CREATE \"$mbx\"");
+   while ( 1 ) {
+      $response = readResponse ($conn);
+      last if $response =~ /^1 OK/i;
+      last if $response =~ /already exists/i;
+      if ( $response =~ /^1 NO|^1 BAD|^\* BYE/ ) {
+         Log ("Error creating $mbx: $response");
+         last;
+      }
+      if ( $response eq ''  or $response =~ /^1 NO/ ) {
+         Log ("unexpected CREATE response: >$response<");
+         Log("response is NULL");
+         resume();
+         last;
+      }
+
+   }
+
+   #  Subcribe to it.
+
+   #sendCommand( $conn, "1 SUBSCRIBE \"$mbx\"");
+   #while ( 1 ) {
+   #   readResponse( $conn );
+   #   if ( $response =~ /^1 OK/i ) {
+   #      Log("Mailbox $mbx has been subscribed") if $debug;
+   #      last;
+   #   } elsif ( $response =~ /^1 NO|^1 BAD|\^* BYE/i ) {
+   #      Log("Unexpected response to subscribe $mbx command: $response");
+   #      last;
+   #   }
+   #}
 }
 
 1;

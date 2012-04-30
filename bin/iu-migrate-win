@@ -124,27 +124,6 @@ my $users = shift;
 
 }
 
-sub createMbx {
-
-my $mbx  = shift;
-my $conn = shift;
-
-   #  Create the mailbox if necessary
-   
-   &sendCommand ($conn, "1 CREATE \"$mbx\"");
-   while ( 1 ) {
-      $response = readResponse ($conn);
-      last if $response =~ /^$conn OK/i;
-      if ( $response !~ /^\*/ ) {
-         if (!($response =~ /already exists|reserved mailbox name/i)) {
-            # &Log ("WARNING: $response");
-         }
-         last;
-       }
-   } 
-
-}
-
 #  insertMsg
 #
 #  This routine inserts a message into a user's mailbox

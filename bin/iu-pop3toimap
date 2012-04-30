@@ -643,27 +643,6 @@ my $newdate;
 
 }
 
-sub createMbx {
-
-my $mbx  = shift;
-my $conn = shift;
-
-   #  Create the mailbox if necessary
-   
-   sendCommand ($conn, "1 CREATE \"$mbx\"");
-   while ( 1 ) {
-      $response = readResponse ($conn);
-      last if $response =~ /^1 OK/i;
-      last if $response =~ /already exists/i;
-      if ( $response =~ /^1 NO|^1 BAD|^\* BYE/ ) {
-         Log ("Error creating $mbx: $response");
-         last;
-      }
-      
-   } 
-
-}
-
 sub namespace {
 
 my $conn      = shift;
