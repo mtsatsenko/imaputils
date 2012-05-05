@@ -5,7 +5,7 @@
 package IMAP::Utils;
 require Exporter;
 @ISA = qw(Exporter);
-@EXPORT= qw(Log openLog connectToHost readResponse sendCommand signalHandler logout login conn_timed_out getDelimiter @response hash trim deleteMsg isAscii createMbx);
+@EXPORT= qw(Log openLog connectToHost readResponse sendCommand signalHandler logout login conn_timed_out getDelimiter @response hash trim deleteMsg isAscii createMbx validate_date);
 
 #  Open the logFile
 #
@@ -482,6 +482,22 @@ my $conn = shift;
    #      last;
    #   }
    #}
+}
+
+#  Make sure the "after" date is in DD-MMM-YYYY format
+sub validate_date {
+
+my $date = shift;
+my $invalid;
+
+   my ($day,$month,$year) = split(/-/, $date);
+   $invalid = 1 unless ( $day > 0 and $day < 32 );
+   $invalid = 1 unless $month =~ /Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec/i;
+   $invalid = 1 unless $year > 1900 and $year < 2999;
+   if ( $invalid ) {
+      Log("The 'Sent after' date $date must be in DD-MMM-YYYY format");
+      exit;
+   }
 }
 
 1;
