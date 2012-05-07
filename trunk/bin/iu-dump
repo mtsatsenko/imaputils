@@ -582,36 +582,6 @@ my $msgnum;
    return $msgnum;
 }
 
-sub expungeMbx {
-
-my $conn  = shift;
-my $mbx   = shift;
-
-   Log("SELECT $mbx") if $debug;
-   sendCommand ( $conn, "1 SELECT \"$mbx\"");
-   while (1) {
-        $response = readResponse ($conn);
-        last if $response =~ /^1 OK/;
-
-	if ( $response =~ /^1 NO|^1 BAD/i ) {
-	   Log("Error selecting mailbox $mbx: $response");
-	   last;
-	}
-   }
-
-   sendCommand ( $conn, "1 EXPUNGE");
-   while (1) {
-        $response = readResponse ($conn);
-        last if $response =~ /^1 OK/;
-
-	if ( $response =~ /^1 BAD|^1 NO/i ) {
-	   print "Error expunging messages: $response\n";
-	   last;
-	}
-   }
-
-}
-
 sub flags_ok {
 
 my $flags = shift;

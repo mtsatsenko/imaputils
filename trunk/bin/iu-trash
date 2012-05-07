@@ -369,38 +369,6 @@ my $msgnum;
    return $msgnum;
 }
 
-sub expungeMbx {
-
-my $mbx   = shift;
-my $conn  = shift;
-
-   print STDOUT "Purging mailbox $mbx..." if $debug;
-
-   &sendCommand ($conn, "$rsn SELECT \"$mbx\"");
-   while (1) {
-        $response = readResponse ($conn);
-        last if ( $response =~ /^$rsn OK/i );
-   }
-
-   &sendCommand ( $conn, "1 EXPUNGE");
-   $expunged=0;
-   while (1) {
-        $response = readResponse ($conn);
-        $expunged++ if $response =~ /\* (.+) Expunge/i;
-        last if $response =~ /^1 OK/;
-
-	if ( $response =~ /^1 BAD|^1 NO/i ) {
-	   print "Error purging messages: $response\n";
-	   last;
-	}
-   }
-
-   $totalExpunged += $expunged;
-
-   # print STDOUT "$expunged messages purged\n" if $debug;
-
-}
-
 sub checkForAdds {
 
 my $added=0;
