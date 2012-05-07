@@ -5,7 +5,7 @@
 package IMAP::Utils;
 require Exporter;
 @ISA = qw(Exporter);
-@EXPORT= qw(Log openLog connectToHost readResponse sendCommand signalHandler logout login conn_timed_out getDelimiter @response hash trim deleteMsg isAscii createMbx validate_date);
+@EXPORT= qw(Log openLog connectToHost readResponse sendCommand signalHandler logout login conn_timed_out getDelimiter @response hash trim deleteMsg isAscii createMbx validate_date expungeMbx);
 
 #  Open the logFile
 #
@@ -498,6 +498,39 @@ my $invalid;
       Log("The 'Sent after' date $date must be in DD-MMM-YYYY format");
       exit;
    }
+}
+
+sub expungeMbx {
+
+my $mbx   = shift;
+my $conn  = shift;
+
+   Log("Expunging mailbox $mbx");
+
+   sendCommand ($conn, "1 SELECT \"$mbx\"");
+   while (1) {
+        $response = readResponse ($conn);
+        last if ( $response =~ /1 OK/i );
+   }
+
+   sendCommand ( $conn, "1 EXPUNGE");
+   $expunged=0;
+   while (1) {
+        $response = readResponse ($conn);
+        $expunged++ if $response =~ /\* (.+) Expunge/i;
+        last if $response =~ /^1 OK/;
+
+    if ( $response =~ /^1 BAD|^1 NO/i ) {
+       Log("Error purging messages: $response");
+       last;
+    }
+   }
+
+   $totalExpunged += $expunged;
+
+   Log("$expunged messages expunged");
+
+   return $expunged;
 }
 
 1;
