@@ -760,26 +760,6 @@ my ($lsn,$lenx);
    return 1;
 }
 
-sub mbxExists {
-
-my $mbx  = shift;
-my $conn = shift;
-my $status = 1;
-
-   #  Determine whether a mailbox exists
-   sendCommand ($conn, "1 SELECT \"$mbx\"");
-   while (1) {
-        $response = readResponse ($conn);
-        last if $response =~ /^1 OK/i;
-        if ( $response =~ /^1 NO|^1 BAD|^\* BYE/ ) {
-           $status = 0;
-           last;
-        }
-   }
-
-   return $status;
-}
-
 sub get_maildir_folders {
 
 my $userpath = shift;

@@ -893,32 +893,6 @@ my $dst  = shift;
    }
 }
 
-sub mbxExists {
-
-my $mbx  = shift;
-my $conn = shift;
-my $status = 1;
-my $loops;
-
-   #  Determine whether a mailbox exists
-
-   sendCommand ($conn, "1 SELECT \"$mbx\"");
-   while (1) {
-        $response = readResponse ($conn);
-        last if $response =~ /^1 OK/i;
-        if ( $response =~ /^1 NO|^1 BAD/ ) {
-           $status = 0;
-           last;
-        }
-        if ( $loops++ > 1000 ) {
-           Log("No response to SELECT command, skipping this mailbox"); 
-           last;
-        }
-   }
-
-   return $status;
-}
-
 sub sort_flags {
 
 my $flags = shift;

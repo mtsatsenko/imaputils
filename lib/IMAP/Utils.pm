@@ -5,7 +5,7 @@
 package IMAP::Utils;
 require Exporter;
 @ISA = qw(Exporter);
-@EXPORT= qw(Log openLog connectToHost readResponse sendCommand signalHandler logout login conn_timed_out getDelimiter @response hash trim deleteMsg isAscii createMbx validate_date expungeMbx getMsgIdList);
+@EXPORT= qw(Log openLog connectToHost readResponse sendCommand signalHandler logout login conn_timed_out getDelimiter @response hash trim deleteMsg isAscii createMbx validate_date expungeMbx getMsgIdList getMailboxList mbxExists);
 
 #  Open the logFile
 #
@@ -605,6 +605,122 @@ my $msgid;
        }
    }
 
+}
+#  getMailboxList
+#
+#  get a list of the user's mailboxes from the source host
+#
+sub getMailboxList {
+
+my $prefix = shift;
+my $conn   = shift;
+my $mbxList   = shift;
+my @mbxs;
+
+   #  Get a list of the user's mailboxes
+   #
+
+   Log("Get list of user's mailboxes",2) if $debugMode;
+
+   if ( $mbxList ) {
+      foreach $mbx ( split(/,/, $mbxList) ) {
+         $mbx = $prefix . $mbx if $prefix;
+         if ( $opt_R ) {
+            # Get all submailboxes under the ones specified
+            $mbx .= '*';
+            @mailboxes = listMailboxes( $mbx, $conn);
+            push( @mbxs, @mailboxes );
+         } else {
+            push( @mbxs, $mbx );
+         }
+      }
+   } else {
+      #  Get all mailboxes
+      @mbxs = listMailboxes( '*', $conn);
+   }
+
+   return @mbxs;
+}
+
+#  listMailboxes
+#
+#  Get a list of the user's mailboxes
+#
+
+sub listMailboxes {
+
+my $mbx  = shift;
+my $conn = shift;
+
+   sendCommand ($conn, "1 LIST \"\" \"$mbx\"");
+   undef @response;
+   while ( 1 ) {
+        $response = readResponse ($conn);
+        if ( $response =~ /^1 OK/i ) {
+                last;
+        }
+        elsif ( $response !~ /^\*/ ) {
+                &Log ("unexpected response: $response");
+                return 0;
+        }
+   }
+
+   @mbxs = ();
+   for $i (0 .. $#response) {
+        $response[$i] =~ s/\s+/ /;
+        if ( $response[$i] =~ /"$/ ) {
+           $response[$i] =~ /\* LIST \((.*)\) "(.+)" "(.+)"/i;
+           $mbx = $3;
+        } elsif ( $response[$i] =~ /\* LIST \((.*)\) NIL (.+)/i ) {
+           $mbx   = $2;
+        } else {
+           $response[$i] =~ /\* LIST \((.*)\) "(.+)" (.+)/i;
+           $mbx = $3;
+        }
+        $mbx =~ s/^\s+//;  $mbx =~ s/\s+$//;
+
+        if ($response[$i] =~ /NOSELECT/i) {
+           if ( $include_nosel_mbxs ) {
+              $nosel_mbxs{"$mbx"} = 1;
+           } else {
+              Log("$mbx is set NOSELECT, skipping it") if $debug;
+              next;
+           }
+        }
+        if ($mbx =~ /^\./) {
+                # Skip mailboxes starting with a dot
+                next;
+        }
+        push ( @mbxs, $mbx ) if $mbx ne '';
+   }
+
+   return @mbxs;
+}
+
+#  Determine whether a mailbox exists
+sub mbxExists {
+
+my $mbx  = shift;
+my $conn = shift;
+my $status = 1;
+#my $loops;
+
+   #  Determine whether a mailbox exists
+   sendCommand ($conn, "1 EXAMINE \"$mbx\"");
+   while (1) {
+        $response = readResponse ($conn);
+        last if $response =~ /^1 OK/i;
+        if ( $response =~ /^1 NO|^1 BAD|^\* BYE/ ) {
+           $status = 0;
+           last;
+        }
+#        if ( $loops++ > 1000 ) {
+#           Log("No response to SELECT command, skipping this mailbox");
+#           last;
+#       } 
+   }
+
+   return $status;
 }
 
 1;
