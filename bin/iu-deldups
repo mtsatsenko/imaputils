@@ -599,24 +599,3 @@ print STDERR "XXX $$message\n";
    }
 
 }
-
-sub selectMbx {
-
-my $mbx = shift;
-my $conn = shift;
-
-   #  Select the mailbox
-
-   sendCommand( $conn, "1 SELECT \"$mbx\"");
-   while ( 1 ) {
-      $response = readResponse( $conn );
-      if ( $response =~ /^1 OK/i ) {
-         last;
-      } elsif ( $response =~ /^1 NO|^1 BAD|^\* BYE/i ) {
-         Log("Unexpected response to SELECT $mbx command: $response");
-         last;
-      }
-   }
-
-}
-
