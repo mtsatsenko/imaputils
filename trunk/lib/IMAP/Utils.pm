@@ -5,7 +5,7 @@
 package IMAP::Utils;
 require Exporter;
 @ISA = qw(Exporter);
-@EXPORT= qw(Log openLog connectToHost readResponse sendCommand signalHandler logout login conn_timed_out getDelimiter @response hash trim deleteMsg isAscii createMbx validate_date expungeMbx getMsgIdList getMailboxList mbxExists);
+@EXPORT= qw(Log openLog connectToHost readResponse sendCommand signalHandler logout login conn_timed_out getDelimiter @response hash trim deleteMsg isAscii createMbx validate_date expungeMbx getMsgIdList getMailboxList mbxExists selectMbx);
 
 #  Open the logFile
 #
@@ -721,6 +721,42 @@ my $status = 1;
    }
 
    return $status;
+}
+
+
+sub selectMbx {
+
+my $mbx = shift;
+my $conn = shift;
+
+   #  Some IMAP clients such as Outlook and Netscape) do not automatically list
+   #  all mailboxes.  The user must manually subscribe to them.  This routine
+   #  does that for the user by marking the mailbox as 'subscribed'.
+
+   #sendCommand( $conn, "1 SUBSCRIBE \"$mbx\"");
+   #while ( 1 ) {
+   #   $response = readResponse( $conn );
+   #   if ( $response =~ /^1 OK/i ) {
+   #      Log("Mailbox $mbx has been subscribed") if $debug;
+   #      last;
+   #   } elsif ( $response =~ /^1 NO|^1 BAD|\^* BYE/i ) {
+   #      Log("Unexpected response to subscribe $mbx command: $response");
+   #      last;
+   #   }
+   #}
+
+   #  Now select the mailbox
+   sendCommand( $conn, "1 SELECT \"$mbx\"");
+   while ( 1 ) {
+      $response = readResponse( $conn );
+      if ( $response =~ /^1 OK/i ) {
+         last;
+      } elsif ( $response =~ /^1 NO|^1 BAD|^\* BYE/i ) {
+         Log("Unexpected response to SELECT $mbx command: $response");
+         last;
+      }
+   }
+
 }
 
 1;

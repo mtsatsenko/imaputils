@@ -488,39 +488,6 @@ my $fd = shift;
    return $response;
 }
 
-sub selectMbx {
-
-my $mbx  = shift;
-my $conn = shift;
-
-   sendCommand( $conn, "1 SUBSCRIBE \"$mbx\"");
-   while ( 1 ) {
-      $response = readResponse( $conn );
-      if ( $response =~ /^1 OK/i ) {
-         Log("Mailbox $mbx has been subscribed") if $debug;
-         last;
-      } elsif ( $response =~ /^1 NO|^1 BAD|\^* BYE/i ) {
-         Log("Unexpected response to subscribe $mbx command: $response");
-         last;
-      }
-   }
-   sendCommand ($conn, "1 SELECT \"$mbx\"");
-   undef @response;
-   $empty=0;
-   while ( 1 ) {
-        $response = readResponse ( $conn );
-        if ( $response =~ /^1 OK/i ) {
-           # print STDERR "response $response\n";
-           last;
-        }
-        elsif ( $response !~ /^\*/ ) {
-           Log ("unexpected response: $response");
-          return 0;
-        }
-   }
-
-}
-
 sub getMailboxList {
 
 my $user = shift;
