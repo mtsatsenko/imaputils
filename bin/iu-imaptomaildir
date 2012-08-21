@@ -658,8 +658,8 @@ my @subdirs = qw( new cur tmp );
       }
    }
 
-   my $stst = chown $userid, $groupid, $folder if $opt_u and $opt_g;   # Set ownership
-   if ( $stat ) {
+   my $stat = chown $userid, $groupid, $folder if $opt_u and $opt_g;   # Set ownership
+   if ( ! $stat ) {
       Log("Failed to chown $username for $folder: $!");
       exit;
    }
