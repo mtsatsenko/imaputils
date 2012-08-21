@@ -117,7 +117,7 @@ use IMAP::Utils;
           unless ( $stat ) {
              Log("Rename $mfdir/$mailfile.new to $mfdir/$mailfile failed: $stat");
           } else {
-             $stat = `chown $owner $mfdir/$mailfile`;
+             chown $owner $mfdir/$mailfile;
              Log("Installed new version of mailfile $mfdir/$mailfile");
           }
        }
