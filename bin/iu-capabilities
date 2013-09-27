@@ -81,7 +81,7 @@ eval 'use Unicode::IMAPUtf7';
 
    if ( $list_mbxs ) {
       print STDOUT "\nList of mailboxes for $user:\n\n";
-      @mbxs = listMailboxes( $conn );
+      @mbxs = listMailboxes('*', $conn );
 
       foreach $mbx ( @mbxs ) {
          $mbx1 = Unicode::IMAPUtf7::imap_utf7_decode( $mbx );
@@ -151,44 +151,4 @@ my $capability;
    $capability =~ s/^\* CAPABILITY //;
    print "$capability\n";
 
-}
-
-#  listMailboxes
-#
-#  Get a list of the user's mailboxes
-#
-sub listMailboxes {
-
-my $conn = shift;
-
-   sendCommand ($conn, "1 LIST \"\" *");
-   undef @response;
-   while ( 1 ) {
-        $response = &readResponse ($conn);
-        if ( $response =~ /^1 OK/i ) {
-                last;
-        }
-        elsif ( $response !~ /^\*/ ) {
-                &Log ("unexpected response: $response");
-                return 0;
-        }
-   }
-
-   @mbxs = ();
-   for $i (0 .. $#response) {
-        $response[$i] =~ s/\s+/ /;
-        if ( $response[$i] =~ /"$/ ) {
-           $response[$i] =~ /\* LIST \((.*)\) "(.+)" "(.+)"/i;
-           $mbx = $3;
-        } elsif ( $response[$i] =~ /\* LIST \((.*)\) NIL (.+)/i ) {
-           $mbx   = $2;
-        } else {
-           $response[$i] =~ /\* LIST \((.*)\) "(.+)" (.+)/i;
-           $mbx = $3;
-        }
-        $mbx =~ s/^\s+//;  $mbx =~ s/\s+$//;
-        push ( @mbxs, $mbx ) if $mbx ne '';
-   }
-
-   return @mbxs;
 }
