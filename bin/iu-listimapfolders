@@ -118,56 +118,6 @@ my @mbxs;
    return @mbxs;
 }
 
-#  listMailboxes
-#
-#  Get a list of the user's mailboxes
-#
-sub listMailboxes {
-
-my $mbx  = shift;
-my $conn = shift;
-
-   sendCommand ($conn, "1 LIST \"\" \"$mbx\"");
-   undef @response;
-   while ( 1 ) {
-        $response = readResponse ($conn);
-        if ( $response =~ /^1 OK/i ) {
-                last;
-        }
-        elsif ( $response !~ /^\*/ ) {
-                &Log ("unexpected response: $response");
-                return 0;
-        }
-   }
-
-   @mbxs = ();
-   for $i (0 .. $#response) {
-        $response[$i] =~ s/\s+/ /;
-        if ( $response[$i] =~ /"$/ ) {
-           $response[$i] =~ /\* LIST \((.*)\) "(.+)" "(.+)"/i;
-           $mbx = $3;
-        } elsif ( $response[$i] =~ /\* LIST \((.*)\) NIL (.+)/i ) {
-           $mbx   = $2;
-        } else {
-           $response[$i] =~ /\* LIST \((.*)\) "(.+)" (.+)/i;
-           $mbx = $3;
-        }
-        $mbx =~ s/^\s+//;  $mbx =~ s/\s+$//;
-
-        # if ($response[$i] =~ /NOSELECT/i) {
-        #  if ( $include_nosel_mbxs ) {
-        #     $nosel_mbxs{"$mbx"} = 1;
-        #  } else {
-        #     Log("$mbx is set NOSELECT, skipping it");
-        #     next;
-        #  }
-        # }
-        push ( @mbxs, $mbx ) if $mbx ne '';
-   }
-
-   return @mbxs;
-}
-
 sub processArgs {
 
    if ( !getopts( "dS:L:O:uhH" ) ) {
