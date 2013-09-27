@@ -185,7 +185,7 @@ my $user = shift;
       }
 
       $added=0;
-      selectMbx( $dstmbx, 'SELECT', $dst );
+      selectMbx( $dstmbx, $dst, 'SELECT' );
       foreach $_ ( @msgs ) {
          ($msgnum,$date,$flags,$msgid) = split(/\|/, $_);
          $flags = validate_flags( $flags, \%SUPPORTED_FLAGS );
@@ -806,8 +806,8 @@ my $fn = shift;
 sub selectMbx {
 
 my $mbx  = shift;
-my $mode = shift;
 my $conn = shift;
+my $mode = shift;
 
    $mode = 'EXAMINE' unless $mode eq 'SELECT';
 
@@ -852,7 +852,7 @@ my $conn = shift;
    }
    connectToHost($host,$conn);
    login($user,$pwd,$conn);
-   selectMbx( $mbx, 'SELECT', $conn );
+   selectMbx( $mbx, $conn, 'SELECT');
    createMbx( $mbx, $dst );   # Just in case
    Log("leaving reconnect");
 }
