@@ -620,7 +620,7 @@ my @mbxs;
    #  Get a list of the user's mailboxes
    #
 
-   Log("Get list of user's mailboxes",2) if $debugMode;
+   Log("Get list of user's mailboxes",2) if $debug;
 
    if ( $mbxList ) {
       foreach $mbx ( split(/,/, $mbxList) ) {
