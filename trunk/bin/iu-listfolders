@@ -32,7 +32,7 @@ use IMAP::Utils;
          print OUT "$mbx\n";
       }
       close OUT;
-      Log ("Wrote list of mailboxes to $output_file\n)";
+      Log ("Wrote list of mailboxes to $output_file\n");
       exit;
    }
    foreach $mbx ( @mbxs ) {
