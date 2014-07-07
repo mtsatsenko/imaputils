@@ -205,7 +205,7 @@ my $user = shift;
          }
 
          alarm $timeout;
-         fetchMsg( $msgnum, $mbx, \$message, $src );
+         fetchMsg( $msgnum, $src, \$message);
          alarm 0;
          if ( $conn_timed_out ) {
             Log("$srcHost timed out");
@@ -545,67 +545,6 @@ my $flags;
 
 }
 
-
-sub fetchMsg {
-
-my $msgnum = shift;
-my $mbx    = shift;
-my $message = shift;
-my $conn   = shift;
-
-   Log("   Fetching msg $msgnum...") if $debug;
-   $$mesage = '';
-
-   sendCommand( $conn, "1 FETCH $msgnum (rfc822)");
-@a = ();
-   while (1) {
-	$response = readResponse ($conn);
-	Log ("Unable to fetch message - connection timeout") if ($conn_timed_out);
-	if ( $response =~ /^1 OK/i ) {
-           last;
-	} 
-        elsif ( $response =~ /^1 NO|^1 BAD/i ) {
-                Log("Error fetching msgnum $msgnum: $response");
-                last;
-        }
-	elsif ($response =~ /message number out of range/i) {
-	   Log ("Error fetching uid $uid: out of range",2);
-	   $stat=0;
-	   last;
-	}
-	elsif ($response =~ /Bogus sequence in FETCH/i) {
-	   Log ("Error fetching uid $uid: Bogus sequence in FETCH",2);
-	   $stat=0;
-	   last;
-	}
-	elsif ( $response =~ /message could not be processed/i ) {
-		Log("Message could not be processed, skipping it");
-		push(@errors,"Message could not be processed, skipping it");
-		$stat=0;
-		last;
-	}
-	elsif 
-	   ($response =~ /^\*\s+$msgnum\s+FETCH\s+\(.*RFC822\s+\{[0-9]+\}/i) {
-		($len) = ($response =~ /^\*\s+$msgnum\s+FETCH\s+\(.*RFC822\s+\{([0-9]+)\}/i);
-		$cc = 0;
-		$$message = "";
-		while ( $cc < $len ) {
-                   # Log ("Already read $cc bytes of $len - waiting on " . ($len - $cc)) if $debug;
-                   $n = 0;
-                   $n = read ($conn, $segment, $len - $cc);
-                   # $n = read ($conn, $segment, ($len - $cc > 4096 ? 4096 : $len-$cc));
-                   # Log ("Read $n bytes") if $debug;
-                   if ( $n == 0 ) {
-                      Log ("unable to read $len bytes");
-                      return 0;
-                   }
-                   $$message .= $segment;
-                   $cc += $n;
-		}
-	}
-   }
-
-}
 
 #
 #  $response = readResponse
