@@ -301,65 +301,6 @@ my $remhosts = shift;
    }
 }
 
-sub fetchMsg {
-
-my $msgnum = shift;
-my $mbx    = shift;
-my $conn   = shift;
-my $message;
-
-   Log("   Fetching msg $msgnum...") if $debug;
-   sendCommand ($conn, "1 SELECT \"$mbx\"");
-   while (1) {
-        $response = readResponse ($conn);
-	last if ( $response =~ /^1 OK/i );
-   }
-
-   sendCommand( $conn, "1 FETCH $msgnum (rfc822)");
-   while (1) {
-	$response = readResponse ($conn);
-	if ( $response =~ /^1 OK/i ) {
-		$size = length($message);
-		last;
-	} 
-	elsif ($response =~ /message number out of range/i) {
-		Log ("Error fetching uid $uid: out of range",2);
-		$stat=0;
-		last;
-	}
-	elsif ($response =~ /Bogus sequence in FETCH/i) {
-		Log ("Error fetching uid $uid: Bogus sequence in FETCH",2);
-		$stat=0;
-		last;
-	}
-	elsif ( $response =~ /message could not be processed/i ) {
-		Log("Message could not be processed, skipping it ($user,msgnum $msgnum,$destMbx)");
-		push(@errors,"Message could not be processed, skipping it ($user,msgnum $msgnum,$destMbx)");
-		$stat=0;
-		last;
-	}
-	elsif 
-	   ($response =~ /^\*\s+$msgnum\s+FETCH\s+\(.*RFC822\s+\{[0-9]+\}/i) {
-		($len) = ($response =~ /^\*\s+$msgnum\s+FETCH\s+\(.*RFC822\s+\{([0-9]+)\}/i);
-		$cc = 0;
-		$message = "";
-		while ( $cc < $len ) {
-			$n = 0;
-			$n = read ($conn, $segment, $len - $cc);
-			if ( $n == 0 ) {
-				Log ("unable to read $len bytes");
-				return 0;
-			}
-			$message .= $segment;
-			$cc += $n;
-		}
-	}
-   }
-
-   return $message;
-
-}
-
 sub getMsgInfo {
 
 my $msgnum = shift;
@@ -558,7 +499,7 @@ while(($x,$y) = each(%remhosts)) {
    $moved=0;
    foreach $msgnum ( split(/,/, $msglist) ) {
        Log("   Moving msg number $msgnum to $remhost:$mbx") if $debug;
-       $message = fetchMsg( $msgnum, $srcmbx, $srcconn );
+       fetchMsg( $msgnum, $srcconn, \$message );
        ($date,$flag) = getMsgInfo( $msgnum, $srcconn);
        insertMsg( $remconn, $dstmbx, *message, $flags, $date );
        $moved++;

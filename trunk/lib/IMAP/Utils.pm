@@ -5,7 +5,7 @@
 package IMAP::Utils;
 require Exporter;
 @ISA = qw(Exporter);
-@EXPORT= qw(Log openLog connectToHost readResponse sendCommand signalHandler logout login conn_timed_out getDelimiter @response hash trim deleteMsg isAscii createMbx validate_date expungeMbx getMsgIdList getMailboxList mbxExists selectMbx);
+@EXPORT= qw(Log openLog connectToHost readResponse sendCommand signalHandler logout login conn_timed_out getDelimiter @response hash trim deleteMsg isAscii createMbx validate_date expungeMbx getMsgIdList getMailboxList mbxExists selectMbx fetchMsg);
 
 #  Open the logFile
 #
@@ -757,6 +757,67 @@ my $conn = shift;
       }
    }
 
+}
+
+sub fetchMsg {
+
+my $msgnum = shift;
+my $conn   = shift;
+my $message = shift;
+
+   Log("   Fetching msg $msgnum...") if $debug;
+
+   $$message = '';
+   sendCommand( $conn, "1 FETCH $msgnum (rfc822)");
+   while (1) {
+    $response = readResponse ($conn);
+        last if $response =~ /^1 NO|^1 BAD|^\* BYE/;
+
+    if ( $response eq '' ) {
+        Log("RESP2 >$response<");
+        resume();
+        return 0;
+    }
+    if ( $response =~ /^1 OK/i ) {
+        $size = length($$message);
+        last;
+    }
+    elsif ($response =~ /message number out of range/i) {
+        Log ("Error fetching uid $uid: out of range",2);
+        $stat=0;
+        last;
+    }
+    elsif ($response =~ /Bogus sequence in FETCH/i) {
+        Log ("Error fetching uid $uid: Bogus sequence in FETCH",2);
+        $stat=0;
+        last;
+    }
+    elsif ( $response =~ /message could not be processed/i ) {
+        Log("Message could not be processed, skipping it ($user,msgnum $msgnum,$destMbx)");
+        push(@errors,"Message could not be processed, skipping it ($user,msgnum $msgnum,$destMbx)");
+        $stat=0;
+        last;
+    }
+    elsif
+       ($response =~ /^\*\s+$msgnum\s+FETCH\s+\(.*RFC822\s+\{[0-9]+\}/i) {
+        ($len) = ($response =~ /^\*\s+$msgnum\s+FETCH\s+\(.*RFC822\s+\{([0-9]+)\}/i);
+        $cc = 0;
+        $$message = "";
+        while ( $cc < $len ) {
+            $n = 0;
+            $n = read ($conn, $segment, $len - $cc);
+            if ( $n == 0 ) {
+                Log ("unable to read $len bytes");
+                                resume();
+                return 0;
+            }
+            $$message .= $segment;
+            $cc += $n;
+        }
+    }
+   }
+
+   return 1;
 }
 
 1;
