@@ -60,7 +60,7 @@ use IMAP::Utils;
 
       #  Connect to the IMAP server and login
       connectToHost($imapHost, $imapPort, \$i_conn);
-      next unless loginIMAP( $imapUser, $imapPwd, $i_conn );
+      next unless login( $imapUser, $imapPwd, $i_conn );
 
       namespace( $i_conn, \$prefix, \$delim, $opt_x );
 
@@ -246,33 +246,6 @@ my $rc;
 
 }
 
-#  loginIMAP
-#
-#  login in to the IMAP server
-#
-sub loginIMAP {
-
-my $user = shift;
-my $pwd  = shift;
-my $conn = shift;
-
-   $rsn = 1;
-   sendCommand ($conn, "$rsn LOGIN $user $pwd");
-   while (1) {
-	$response = readResponse ($conn);
-	if ($response =~ /^$rsn OK/i) {
-		last;
-	}
-	elsif ($response !~ /^\*/) {
-		Log ("Error logging into the IMAP server as $user: $response");
-		return 0;
-	}
-   }
-   Log("Logged in at $imapHost as $user") if $debug;
-
-   return 1;
-}
-
 #
 #  getPOPMsgList
 #
@@ -403,7 +376,7 @@ sub alarmHandler {
     loginPOP( $popUser, $popPwd, $p_conn );
 
     connectToIMAP( $imapHost, $i_conn );
-    loginIMAP( $imapUser, $imapPwd, $i_conn );
+    login( $imapUser, $imapPwd, $i_conn );
 
     return;
 }
