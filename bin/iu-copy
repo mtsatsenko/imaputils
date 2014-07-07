@@ -1116,7 +1116,7 @@ sub resume {
    #  Just in case we were creating a mailbox when the connection
    #  was lost check and recreate it if necessary
 
-Log("does $mbx exist?");
+   Log("does $mbx exist?");
    createMbx( $mbx, $dst ) unless mbxExists( $mbx, $dst );
 
    return;
