@@ -50,7 +50,7 @@ use IMAP::Utils;
    login( $destUser,$destPwd, $dst, $dstMethod ) or exit;
    namespace( $dst, \$dstPrefix, \$dstDelim, $opt_y );
 
-   @mbxs = getMailboxList( $srcPrefix, $src, $mbxList);
+   @mbxs = getMailboxList( $srcPrefix, $src, $mbxList, $submbxs);
 
    #  Exclude certain mbxs if that's what the user wants
    exclude_mbxs( \@mbxs ) if $excludeMbxs;
