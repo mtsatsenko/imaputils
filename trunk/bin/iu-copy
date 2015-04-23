@@ -258,7 +258,7 @@ my $fd = shift;
     Log ("<< $response") if $showIMAP;
 
     if ( $response =~ /server unavailable|connection closed/i ) {
-       resume();
+      resume($LAST, $src, $dst, $sourceHost, $sourceUser,  $sourcePwd, $srcMethod, $destHost, $destUser, $destPwd, $dstMethod);
     }
     return $response;
 }
@@ -296,7 +296,7 @@ local ($lenx);
        Log ("1 unexpected APPEND response: >$response<");
        if ( $response eq ''  or $response =~ /^1 NO/ ) {
           Log("response is NULL");
-          resume();
+          resume($LAST, $src, $dst, $sourceHost, $sourceUser,  $sourcePwd, $srcMethod, $destHost, $destUser, $destPwd, $dstMethod);
           next;
        }
        # next;
@@ -1087,6 +1087,20 @@ my $number = shift;
 }
 
 sub resume {
+   my $LAST = shift;
+
+   my $src = shift;
+   my $dst = shift;
+
+   my $sourceHost = shift;
+   my $sourceUser = shift;
+   my $sourcePwd = shift;
+   my $srcMethod = shift;
+
+   my $destHost = shift;
+   my $destUser = shift;
+   my $destPwd = shift;
+   my $dstMethod = shift;
 
    #  Disconnect, re-connect, and log back in.
 
