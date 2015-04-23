@@ -5,7 +5,7 @@
 package IMAP::Utils;
 require Exporter;
 @ISA = qw(Exporter);
-@EXPORT= qw(Log openLog connectToHost readResponse sendCommand signalHandler logout login conn_timed_out getDelimiter @response hash trim deleteMsg isAscii createMbx validate_date expungeMbx getMsgIdList getMailboxList mbxExists selectMbx fetchMsg);
+@EXPORT= qw(Log openLog connectToHost readResponse sendCommand signalHandler logout login conn_timed_out getDelimiter @response hash trim deleteMsg isAscii createMbx validate_date expungeMbx getMsgIdList getMailboxList mbxExists selectMbx fetchMsg listMailboxes);
 
 #  Open the logFile
 #
