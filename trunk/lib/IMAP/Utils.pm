@@ -615,6 +615,7 @@ sub getMailboxList {
 my $prefix = shift;
 my $conn   = shift;
 my $mbxList   = shift;
+my $submbxs = shift;
 my @mbxs;
 
    #  Get a list of the user's mailboxes
@@ -625,7 +626,7 @@ my @mbxs;
    if ( $mbxList ) {
       foreach $mbx ( split(/,/, $mbxList) ) {
          $mbx = $prefix . $mbx if $prefix;
-         if ( $opt_R ) {
+         if ( $submbxs ) {
             # Get all submailboxes under the ones specified
             $mbx .= '*';
             @mailboxes = listMailboxes( $mbx, $conn);
