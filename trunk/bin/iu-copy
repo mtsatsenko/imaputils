@@ -240,29 +240,6 @@ sub init {
 
 }
 
-#
-#  $response = readResponse
-#
-#  This subroutine reads and formats an IMAP protocol response from an
-#  IMAP server on a specified connection.
-#
-
-sub readResponse {
-    
-my $fd = shift;
-
-    $response = <$fd>;
-    chop $response;
-    $response =~ s/\r//g;
-    push (@response,$response);
-    Log ("<< $response") if $showIMAP;
-
-    if ( $response =~ /server unavailable|connection closed/i ) {
-      resume($LAST, $src, $dst, $sourceHost, $sourceUser,  $sourcePwd, $srcMethod, $destHost, $destUser, $destPwd, $dstMethod);
-    }
-    return $response;
-}
-
 #  insertMsg
 #
 #  This routine inserts a message into a user's mailbox
@@ -292,6 +269,11 @@ local ($lenx);
 
    sendCommand ($conn, "1 APPEND \"$mbx\" ($flags) \"$date\" \{$lenx\}");
    $response = readResponse ($conn);
+
+   if ( $response =~ /server unavailable|connection closed/i ) {
+      resume($LAST, $src, $dst, $sourceHost, $sourceUser,  $sourcePwd, $srcMethod, $destHost, $destUser, $destPwd, $dstMethod);
+   }
+
    if ( $response !~ /^\+/ ) {
        Log ("1 unexpected APPEND response: >$response<");
        if ( $response eq ''  or $response =~ /^1 NO/ ) {
