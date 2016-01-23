@@ -55,11 +55,11 @@ use IMAP::Utils;
       ($popUser,$popPwd,$imapUser,$imapPwd) = split(/ /, $line);
 
       #  Connect to the POP server and login
-      connectToHost($popHost, $popPort, \$p_conn);
+      connectToHost("$popHost:$popPort", \$p_conn);
       next unless loginPOP( $popUser, $popPwd, $p_conn );
 
       #  Connect to the IMAP server and login
-      connectToHost($imapHost, $imapPort, \$i_conn);
+      connectToHost("$imapHost:$imapPort", \$i_conn);
       next unless login( $imapUser, $imapPwd, $i_conn );
 
       namespace( $i_conn, \$prefix, \$delim, $opt_x );
