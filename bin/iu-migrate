@@ -657,7 +657,7 @@ my $fn = shift;
    while ( <L> ) {
       chomp;
       s/^\s+//;
-      next if /#/;
+      next if /^#/;
       push( @users, $_ );
    }
    close L;
