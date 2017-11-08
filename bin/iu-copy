@@ -24,6 +24,7 @@
 #       -M <file> mailbox mapping (eg, src:inbox -> dst:inbox_copied) #
 #       -i initialize mailbox (remove existing msgs first)            #
 #       -U run in "update" mode
+#       -f forcibly copy messages with no IDs
 #   Run imapcopy.pl -h to see complete set of arguments.              #
 #######################################################################
 
@@ -418,9 +419,12 @@ my $msgid;
            ($msgnum) = split(/\s+/, $1);
         }
 
+        # use fake $msgid if -f is specified
+        $msgid = ' ' if $force;
+
         if ( $msgnum and $date and $msgid ) {
         # if ( $msgnum and $date ) {
-	   push (@$msgs,"$msgnum|$date|$flags|$msgid");
+            push (@$msgs,"$msgnum|$date|$flags|$msgid");
            $msgnum = $date = $msgid = '';
         }
    }
@@ -614,13 +618,14 @@ sub usage {
    print STDOUT "          -U update mode, don't copy messages that already exist\n";
    print STDOUT "          -B <msgnum>  Starting point for message fetch\n";
    print STDOUT "          -E <msgnum>  Ending point for message fetch\n";
+   print STDOUT "          -f forcibly copy messages with no IDs\n";
    exit;
 
 }
 
 sub processArgs {
 
-   if ( !getopts( "dS:D:L:m:hIp:M:rqx:y:e:Rt:Tia:b:X:vP:A:UB:E:" ) ) {
+   if ( !getopts( "dS:D:L:m:hIp:M:rqx:y:e:Rt:Tia:b:X:vP:A:UB:E:f" ) ) {
       usage();
       exit 0;
    }
@@ -662,6 +667,7 @@ sub processArgs {
    $archive_mbx = $opt_A;
    $start_fetch = $opt_B;
    $end_fetch   = $opt_E;
+   $force   = $opt_f;
    $timeout = 300 unless $timeout;
 
    Log("Running in update mode") if $update;
