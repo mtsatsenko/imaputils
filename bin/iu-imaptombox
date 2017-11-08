@@ -29,6 +29,7 @@
 #######################################################################
 
 use Socket;
+use IO::Socket::INET;
 use FileHandle;
 use Fcntl;
 use Getopt::Std;
