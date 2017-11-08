@@ -760,6 +760,13 @@ my $conn = shift;
 
 }
 
+#here should be reconnect sub
+sub resume {
+    Log("Fatal error, lost connection to either the source or destination");
+    # Log("checkpoint $checkpoint");
+    exit;
+}
+
 sub fetchMsg {
 
 my $msgnum = shift;
