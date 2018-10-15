@@ -5,7 +5,11 @@
 package IMAP::Utils;
 require Exporter;
 @ISA = qw(Exporter);
-@EXPORT= qw(Log openLog connectToHost readResponse sendCommand signalHandler logout login conn_timed_out getDelimiter @response hash trim deleteMsg isAscii createMbx validate_date expungeMbx getMsgIdList getMailboxList mbxExists selectMbx fetchMsg listMailboxes);
+@EXPORT= qw(Log openLog connectToHost readResponse 
+        sendCommand signalHandler logout login conn_timed_out 
+        getDelimiter @response hash trim deleteMsg isAscii createMbx 
+        validate_date expungeMbx getMsgIdList getMailboxList mbxExists 
+        selectMbx fetchMsg listMailboxes getMsgList);
 
 #  Open the logFile
 #
@@ -830,6 +834,111 @@ my $message = shift;
             $cc += $n;
         }
     }
+   }
+
+   return 1;
+}
+
+#  getMsgList
+#
+#  Get a list of the user's messages in the indicated mailbox on
+#  the source host
+#
+sub getMsgList {
+
+my $mailbox = shift;
+my $msgs    = shift;
+my $conn    = shift;
+my $mode    = shift;
+my $force    = shift or 0;
+my $seen;
+my $empty;
+my $msgnum;
+my $from;
+my $flags;
+my $msgid;
+
+   @$msgs  = ();
+   $mode = 'EXAMINE' unless $mode;
+   sendCommand ($conn, "1 $mode \"$mailbox\"");
+   undef @response;
+   $empty=0;
+   while ( 1 ) {
+    $response = readResponse ( $conn );
+    if ( $response =~ / 0 EXISTS/i ) { $empty=1; }
+    if ( $response =~ /^1 OK/i ) {
+        last;
+    }
+    elsif ( $response !~ /^\*/ ) {
+        Log ("unexpected response: $response");
+        return 0;
+    }
+   }
+
+   return 1 if $empty;
+
+   my $start = 1;
+   my $end   = '*';
+   $start = $start_fetch if $start_fetch;
+   $end   = $end_fetch   if $end_fetch;
+
+   sendCommand ( $conn, "1 FETCH $start:$end (uid flags internaldate body[header.fields (From Date Message-Id)])");
+
+   @response = ();
+   while ( 1 ) {
+    $response = readResponse ( $conn );
+
+    if ( $response =~ /^1 OK/i ) {
+        last;
+    }
+        last if $response =~ /^1 NO|^1 BAD|^\* BYE/;
+   }
+
+   $flags = '';
+   for $i (0 .. $#response) {
+    last if $response[$i] =~ /^1 OK FETCH complete/i;
+
+        if ($response[$i] =~ /FLAGS/) {
+           #  Get the list of flags
+           $response[$i] =~ /FLAGS \(([^\)]*)/;
+           $flags = $1;
+           $flags =~ s/\\Recent//;
+        }
+
+        if ( $response[$i] =~ /INTERNALDATE/) {
+           $response[$i] =~ /INTERNALDATE (.+) BODY/i;
+           # $response[$i] =~ /INTERNALDATE "(.+)" BODY/;
+           $date = $1;
+
+           $date =~ /"(.+)"/;
+           $date = $1;
+           $date =~ s/"//g;
+        }
+
+        if ( $response[$i] =~ /^Message-Id:/i ) {
+           $response[$i] =~ /^Message-Id: (.+)/i;
+           $msgid = $1;
+           trim(*msgid);
+           if ( $msgid eq '' ) {
+              # Line-wrap, get it from the next line
+              $msgid = $response[$i+1];
+              trim(*msgid);
+           }
+        }
+
+        # if ( $response[$i] =~ /\* (.+) [^FETCH]/ ) {
+        if ( $response[$i] =~ /\* (.+) FETCH/ ) {
+           ($msgnum) = split(/\s+/, $1);
+        }
+
+        # use fake $msgid if -f is specified
+        $msgid = ' ' if $force;
+
+        if ( $msgnum and $date and $msgid ) {
+        # if ( $msgnum and $date ) {
+            push (@$msgs,"$msgnum|$date|$flags|$msgid");
+           $msgnum = $date = $msgid = '';
+        }
    }
 
    return 1;
