@@ -666,31 +666,6 @@ my $fn = shift;
 
 }
 
-sub selectMbx {
-
-my $mbx  = shift;
-my $conn = shift;
-my $mode = shift;
-
-   $mode = 'EXAMINE' unless $mode eq 'SELECT';
-
-   Log("selecting mbx $mbx") if $debug;
-   sendCommand ($conn, "1 $mode \"$mbx\"");
-   undef @response;
-   $empty=0;
-   while ( 1 ) {
-        $response = readResponse ( $conn );
-        if ( $response =~ /^1 OK/i ) {
-           # print STDERR "response $response\n";
-           last;
-        }
-        elsif ( $response !~ /^\*/ ) {
-           Log ("unexpected response: $response");
-          return 0;
-        }
-   }
-
-}
 
 #  Reconnect to a server after a timeout error.
 #
