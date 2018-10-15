@@ -689,8 +689,12 @@ my $conn = shift;
            }
         }
         if ($mbx =~ /^\./) {
-                # Skip mailboxes starting with a dot
-                next;
+            # Skip mailboxes starting with a dot
+            next;
+        }
+        if ($mbx =~ /^\#|^Public Folders/i)  {
+            #  Skip public mbxs
+            next;
         }
         push ( @mbxs, $mbx ) if $mbx ne '';
    }
