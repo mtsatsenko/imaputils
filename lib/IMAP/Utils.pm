@@ -454,6 +454,7 @@ sub createMbx {
 
 my $mbx  = shift;
 my $conn = shift;
+my $suscribe = shift or 0;
 
    sendCommand ($conn, "1 CREATE \"$mbx\"");
    while ( 1 ) {
@@ -473,19 +474,19 @@ my $conn = shift;
 
    }
 
-   #  Subcribe to it.
-
-   #sendCommand( $conn, "1 SUBSCRIBE \"$mbx\"");
-   #while ( 1 ) {
-   #   readResponse( $conn );
-   #   if ( $response =~ /^1 OK/i ) {
-   #      Log("Mailbox $mbx has been subscribed") if $debug;
-   #      last;
-   #   } elsif ( $response =~ /^1 NO|^1 BAD|\^* BYE/i ) {
-   #      Log("Unexpected response to subscribe $mbx command: $response");
-   #      last;
-   #   }
-   #}
+    #  Subcribe to it.
+    if ($subscribe) {
+        sendCommand( $conn, "1 SUBSCRIBE \"$mbx\"");
+        while ( 1 ) {
+        readResponse( $conn );
+        if ( $response =~ /^1 OK/i ) {
+            Log("Mailbox $mbx has been subscribed") if $debug;
+            last;
+        } elsif ( $response =~ /^1 NO|^1 BAD|\^* BYE/i ) {
+            Log("Unexpected response to subscribe $mbx command: $response");
+            last;
+        }
+    }
 }
 
 #  Make sure the "after" date is in DD-MMM-YYYY format
