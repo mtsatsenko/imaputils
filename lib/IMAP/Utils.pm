@@ -729,6 +729,7 @@ sub selectMbx {
 
 my $mbx = shift;
 my $conn = shift;
+my $mode = shift or 'SELECT';
 
    #  Some IMAP clients such as Outlook and Netscape) do not automatically list
    #  all mailboxes.  The user must manually subscribe to them.  This routine
@@ -746,14 +747,16 @@ my $conn = shift;
    #   }
    #}
 
+   Log("selecting mbx $mbx") if $debug;
+
    #  Now select the mailbox
-   sendCommand( $conn, "1 SELECT \"$mbx\"");
+   sendCommand( $conn, "1 $mode \"$mbx\"");
    while ( 1 ) {
       $response = readResponse( $conn );
       if ( $response =~ /^1 OK/i ) {
          last;
       } elsif ( $response =~ /^1 NO|^1 BAD|^\* BYE/i ) {
-         Log("Unexpected response to SELECT $mbx command: $response");
+         Log("Unexpected response to $mode $mbx command: $response");
          last;
       }
    }
