@@ -845,7 +845,7 @@ my $dst  = shift;
 
    foreach my $mbx ( @$mbxs ) {
       $dstmbx = mailboxName( $mbx,$srcPrefix,$srcDelim,$dstPrefix,$dstDelim );
-      createMbx( $dstmbx, $dst ) unless mbxExists( $dstmbx, $dst );
+      createMbx( $dstmbx, $dst, true ) unless mbxExists( $dstmbx, $dst );
    }
 }
 
