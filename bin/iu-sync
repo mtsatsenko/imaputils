@@ -165,51 +165,7 @@ my @mailboxes;
       return @mailboxes;
    }
 
-   Log("Get list of mailboxes") if $verbose;
-
-   sendCommand ($conn, "1 LIST \"\" *");
-   undef @response;
-   while ( 1 ) {
-	$response = readResponse ($conn);
-	if ( $response =~ /^1 OK/i ) {
-		last;
-	}
-	elsif ( $response !~ /^\*/ ) {
-		Log ("unexpected response: $response");
-		return 0;
-	}
-   }
-
-   @mbxs = ();
-
-   for $i (0 .. $#response) {
-        $response[$i] =~ s/\s+/ /;
-        if ( $response[$i] =~ /"$/ ) {
-           $response[$i] =~ /\* LIST \((.*)\) "(.+)" "(.+)"/i;
-           $mbx = $3;
-        } elsif ( $response[$i] =~ /\* LIST \((.*)\) NIL (.+)/i ) {
-           $mbx   = $2;
-        } else {
-           $response[$i] =~ /\* LIST \((.*)\) "(.+)" (.+)/i;
-           $mbx = $3;
-        }
-
-	$mbx =~ s/^\s+//;  $mbx =~ s/\s+$//;
-
-        if ($response[$i] =~ /NOSELECT/i) {
-           if ( $include_nosel_mbxs ) {
-              $nosel_mbxs{"$mbx"} = 1;
-           } else {
-              Log("$mbx is set NOSELECT, skipping it");
-              next;
-           }
-        }
-	if ($mbx =~ /^\#|^Public Folders/i)  {
-	   #  Skip public mbxs
-	   next;
-	}
-	push ( @mbxs, $mbx ) if $mbx ne '';
-   }
+   @mbxs = listMailboxes('*', $conn);
 
    return @mbxs;
 }
