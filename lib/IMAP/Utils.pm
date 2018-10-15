@@ -478,13 +478,14 @@ my $suscribe = shift or 0;
     if ($subscribe) {
         sendCommand( $conn, "1 SUBSCRIBE \"$mbx\"");
         while ( 1 ) {
-        readResponse( $conn );
-        if ( $response =~ /^1 OK/i ) {
-            Log("Mailbox $mbx has been subscribed") if $debug;
+            readResponse( $conn );
+            if ( $response =~ /^1 OK/i ) {
+                Log("Mailbox $mbx has been subscribed") if $debug;
+                last;
+            } elsif ( $response =~ /^1 NO|^1 BAD|\^* BYE/i ) {
+                Log("Unexpected response to subscribe $mbx command: $response");
             last;
-        } elsif ( $response =~ /^1 NO|^1 BAD|\^* BYE/i ) {
-            Log("Unexpected response to subscribe $mbx command: $response");
-            last;
+            }
         }
     }
 }
