@@ -115,7 +115,7 @@ use IMAP::Utils;
         } elsif ( $sent_before  ) {
            getDatedMsgList( $srcmbx, 'BEFORE', $sent_before, \@msgs, $src );
         } else {
-           getMsgList( $srcmbx, \@msgs, $src );
+           getMsgList( $srcmbx, \@msgs, $src, 'EXAMINE', $force );
         }
 
         my $msgcount = $#msgs + 1;
@@ -339,6 +339,7 @@ my $mailbox = shift;
 my $msgs    = shift;
 my $conn    = shift;
 my $mode    = shift;
+my $force    = shift or 0;
 my $seen;
 my $empty;
 my $msgnum;
@@ -1016,7 +1017,7 @@ my @msgs;
    #  Remove all messages from a mailbox
 
    Log("Initializing mailbox $mbx");
-   getMsgList( $mbx, \@msgs, $conn, 'SELECT' ); 
+   getMsgList( $mbx, \@msgs, $conn, 'SELECT', $force);
    my $msgcount = $#msgs + 1;
    Log("$mbx has $msgcount messages");
 
