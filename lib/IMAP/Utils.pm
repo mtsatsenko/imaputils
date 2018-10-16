@@ -933,11 +933,7 @@ my $msgid;
            ($msgnum) = split(/\s+/, $1);
         }
 
-        # use fake $msgid if -f is specified
-        $msgid = ' ' if $force;
-
-        if ( $msgnum and $date and $msgid ) {
-        # if ( $msgnum and $date ) {
+        if ($force or ( $msgnum and $date and $msgid )) {
             push (@$msgs,"$msgnum|$date|$flags|$msgid");
            $msgnum = $date = $msgid = '';
         }
