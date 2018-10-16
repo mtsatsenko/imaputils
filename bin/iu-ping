@@ -59,7 +59,7 @@ use IMAP::Utils;
    selectMbx( 'INBOX', $conn ) if $rc;
 
    print STDOUT pack( "A35 A10","Get list of msgs in INBOX", getTime() );
-   getMsgList( 'INBOX', $conn );
+   getMsgList( 'INBOX', (), $conn );
 
    print STDOUT pack( "A35 A10","Logging out", getTime() );
    logout( $conn );
@@ -122,74 +122,4 @@ sub usage {
 
    exit;
 
-}
-
-
-sub selectInbox {
-
-my $mbx  = shift;
-my $conn = shift;
-
-   #  Select a mailbox
-
-   sendCommand ($conn, "1 SELECT $mbx");
-   while (1) {
-	$response = readResponse ($conn);
-	if ($response =~ /^1 OK/i) {
-	   last;
-	}
-	elsif ($response !~ /^\*/) {
-	   print STDOUT "Unexpected SELECT INBOX response: $response\n";
-	   return 0;
-	}
-   }
-
-}
-
-sub getMsgList {
-
-my $mailbox = shift;
-my $conn    = shift;
-
-   #  Select the mailbox in read-only mode
-
-   sendCommand ($conn, "1 EXAMINE \"$mailbox\"");
-   undef @response;
-   $empty=0;
-   while ( 1 ) {
-    	$response = readResponse ($conn);
-
-        last if $response =~ /^1 OK/i;
-    	
-    	if ( $response !~ /^\*/ ) {
-	   print STDOUT "Error: $response\n";
-	   return 0;
-    	}
-   }
-
-   sendCommand ($conn, "1 FETCH 1:* (UID FLAGS)");
-   undef @response;
-   while ( 1 ) {
-	$response = readResponse ($conn);
-    	last if $response =~ /^1 OK/i;
-        if ( $response !~ /^\*/ ) {
-           print STDOUT "Unexpected response: $response\n";
-	   return 0;
-    	}
-   }
-
-   #  Get a list of the msgs in the mailbox
-   #
-   undef @msgs;
-   for $i (0 .. $#response) {
-	$_ = $response[$i];
-        $_ =~ /\* ([^FETCH]*)/;
-	$uid = $1;
-	$uid =~ s/\s+$//;
-   	if ($response[$i] =~ /\\Seen/) { $seen = 1; }
-	if (($uid ne 'OK') && ($uid ne '')) {
-		push (@msgs,"$uid $seen");
-	}
-   }
-   return 1;
 }
