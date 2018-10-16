@@ -839,7 +839,7 @@ my $message = shift;
     }
    }
 
-   return 1;
+   return $$message;
 }
 
 #  getMsgList
