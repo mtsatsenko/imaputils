@@ -170,29 +170,6 @@ my @mailboxes;
    return @mbxs;
 }
 
-#  exclude_mbxs 
-#
-#  Exclude certain mailboxes from the list if the user
-#  has provided an exclude list with the -e argument
-
-sub exclude_mbxs {
-
-my $mbxs = shift;
-my @new_list;
-my %exclude;
-
-   foreach my $exclude ( split(/,/, $excludeMbxs ) ) {
-      $exclude{"$exclude"} = 1;
-   }
-   foreach my $mbx ( @$mbxs ) {
-      next if $exclude{"$mbx"};
-      push( @new_list, $mbx );
-   }
-
-   @$mbxs = @new_list;
-
-}
-
 #  getMsgList
 #
 #  Get a list of the user's messages in the indicated mailbox on
