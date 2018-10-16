@@ -53,7 +53,7 @@ use IMAP::Utils;
    login( $user,$pwd, $conn );
 
    print STDOUT pack( "A35 A10","Get list of mailboxes", getTime() );
-   getMailboxList( $conn );
+   listMailboxes('*', $conn );
 
    print STDOUT pack( "A35 A10","Selecting the INBOX", getTime() );
    selectMbx( 'INBOX', $conn ) if $rc;
@@ -144,45 +144,6 @@ my $conn = shift;
 	}
    }
 
-}
-
-sub getMailboxList {
-
-my $conn = shift;
-
-   #  Get a list of the user's mailboxes
-   
-   sendCommand ($conn, "1 LIST \"\" *");
-   @response = ();
-   while ( 1 ) {
-      $response = readResponse ($conn);
-      last if $response =~ /^1 OK/i;
-	
-      if ( $response !~ /^\*/ ) {
-	 print STDOUT "unexpected response: $response\n";
-         return 0;
-      }
-   }
-
-   @mbxs = ();
-   for $i (0 .. $#response) {
-	# print STDERR "$response[$i]\n";
-	$response[$i] =~ s/\s+/ /;
-	($dmy,$mbx) = split(/"\/"/,$response[$i]);
-	$mbx =~ s/^\s+//;  $mbx =~ s/\s+$//;
-	$mbx =~ s/"//g;
-
-	if ($mbx =~ /^\#/) {
-	   #  Skip public mbxs
-	   next;
-	}
-
-	if ($mbx ne '') {
-	   push(@mbxs,$mbx);
-	}
-   }
-
-   return 1;
 }
 
 sub getMsgList {
