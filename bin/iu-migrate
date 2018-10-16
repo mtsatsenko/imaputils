@@ -546,27 +546,6 @@ my $flags;
 }
 
 
-#
-#  $response = readResponse
-#
-#  This subroutine reads and formats an IMAP protocol response from an
-#  IMAP server on a specified connection.
-#
-
-sub readResponse {
-
-my $fd = shift;
-
-   exit unless defined $fd;
-   $response = <$fd>;
-   chop $response;
-   $response =~ s/\r//g;
-   push (@response,$response);
-   Log ("<< *** Connection timeout ***") if $conn_timed_out;
-   Log ("<< $response") if $showIMAP;
-   return $response;
-}
-
 #  insertMsg
 #
 #  This routine inserts an RFC822 messages into a user's folder
