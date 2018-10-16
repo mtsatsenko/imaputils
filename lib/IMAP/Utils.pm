@@ -9,7 +9,7 @@ require Exporter;
         sendCommand signalHandler logout login conn_timed_out 
         getDelimiter @response hash trim deleteMsg isAscii createMbx 
         validate_date expungeMbx getMsgIdList getMailboxList mbxExists 
-        selectMbx fetchMsg listMailboxes getMsgList);
+        selectMbx fetchMsg listMailboxes getMsgList fixup_date);
 
 #  Open the logFile
 #
@@ -940,6 +940,24 @@ my $msgid;
    }
 
    return 1;
+}
+
+sub fixup_date {
+
+my $date = shift;
+
+   #  Make sure the hrs part of the date is 2 digits.  At least
+   #  one IMAP server expects this.
+
+   $$date =~ s/^\s+//;
+   $$date =~ /(.+) (.+):(.+):(.+) (.+)/;
+   my $hrs = $2;
+
+   return if length( $hrs ) == 2;
+
+   my $newhrs = '0' . $hrs if length( $hrs ) == 1;
+   $$date =~ s/ $hrs/ $newhrs/;
+
 }
 
 1;

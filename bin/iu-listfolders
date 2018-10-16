@@ -691,24 +691,6 @@ my $sig = shift;
    Log("Resuming");
 }
 
-sub fixup_date {
-
-my $date = shift;
-
-   #  Make sure the hrs part of the date is 2 digits.  At least
-   #  one IMAP server expects this.
-
-   $$date =~ s/^\s+//;
-   $$date =~ /(.+) (.+):(.+):(.+) (.+)/;
-   my $hrs = $2;
-   
-   return if length( $hrs ) == 2;
-
-   my $newhrs = '0' . $hrs if length( $hrs ) == 1;
-   $$date =~ s/ $hrs/ $newhrs/;
-
-}
-
 sub init_mbx {
 
 my $mbx  = shift;
