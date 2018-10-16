@@ -9,7 +9,8 @@ require Exporter;
         sendCommand signalHandler logout login conn_timed_out 
         getDelimiter @response hash trim deleteMsg isAscii createMbx 
         validate_date expungeMbx getMsgIdList getMailboxList mbxExists 
-        selectMbx fetchMsg listMailboxes getMsgList fixup_date);
+        selectMbx fetchMsg listMailboxes getMsgList fixup_date
+		exclude_mbxs);
 
 #  Open the logFile
 #
@@ -957,6 +958,29 @@ my $date = shift;
 
    my $newhrs = '0' . $hrs if length( $hrs ) == 1;
    $$date =~ s/ $hrs/ $newhrs/;
+
+}
+
+#  exclude_mbxs
+#
+#  Exclude certain mailboxes from the list if the user
+#  has provided an exclude list with the -e argument
+
+sub exclude_mbxs {
+
+my $mbxs = shift;
+my @new_list;
+my %exclude;
+
+   foreach my $exclude ( split(/,/, $excludeMbxs ) ) {
+      $exclude{"$exclude"} = 1;
+   }
+   foreach my $mbx ( @$mbxs ) {
+      next if $exclude{"$mbx"};
+      push( @new_list, $mbx );
+   }
+
+   @$mbxs = @new_list;
 
 }
 

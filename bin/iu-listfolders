@@ -22,7 +22,7 @@ use IMAP::Utils;
    connectToHost($sourceHost, \$src)   or exit;
    login($sourceUser,$sourcePwd, $src, $srcMethod) or exit;
    namespace( $src, \$srcPrefix, \$srcDelim, $opt_x );
-   @mbxs = getMailboxList( $srcPrefix, $src );
+   @mbxs = getMailboxList( $srcPrefix, $src, $mbxList, $opt_R);
 
    @mbxs = sort @mbxs;
 
@@ -122,64 +122,6 @@ local ($lenx);
    }
 
    return 1;
-}
-
-#  getMailboxList
-#
-#  get a list of the user's mailboxes from the source host
-#
-sub getMailboxList {
-
-my $prefix = shift;
-my $conn   = shift;
-my @mbxs;
-
-   #  Get a list of the user's mailboxes
-   #
-
-   Log("Get list of user's mailboxes",2) if $debugMode;
-
-   if ( $mbxList ) {
-      foreach $mbx ( split(/,/, $mbxList) ) {
-         $mbx = $prefix . $mbx if $prefix;
-         if ( $opt_R ) {
-            # Get all submailboxes under the ones specified
-            $mbx .= '*';
-            @mailboxes = listMailboxes( $mbx, $conn);
-            push( @mbxs, @mailboxes );
-         } else {
-            push( @mbxs, $mbx );
-         }
-      }
-   } else {
-      #  Get all mailboxes
-      @mbxs = listMailboxes( '*', $conn);
-   }
-
-   return @mbxs;
-}
-
-#  exclude_mbxs
-#
-#  Exclude certain mailboxes from the list if the user
-#  has provided an exclude list with the -e argument
-
-sub exclude_mbxs {
-
-my $mbxs = shift;
-my @new_list;
-my %exclude;
-
-   foreach my $exclude ( split(/,/, $excludeMbxs ) ) {
-      $exclude{"$exclude"} = 1;
-   }
-   foreach my $mbx ( @$mbxs ) {
-      next if $exclude{"$mbx"};
-      push( @new_list, $mbx );
-   }
-
-   @$mbxs = @new_list;
-
 }
 
 #  getDatedMsgList
