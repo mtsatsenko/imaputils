@@ -984,4 +984,35 @@ my %exclude;
 
 }
 
+sub findMsg {
+
+my $conn  = shift;
+my $msgid = shift;
+my $mbx   = shift;
+my $msgnum;
+my $rsn = "1";
+
+   Log("SELECT $mbx") if $debug;
+   sendCommand ( $conn, "1 SELECT \"$mbx\"");
+   while (1) {
+    $response = readResponse ($conn);
+    last if $response =~ /^1 OK/;
+   }
+
+   Log("Search for $msgid") if $debug;
+   sendCommand ( $conn, "$rsn SEARCH header Message-ID \"$msgid\"");
+   while (1) {
+    $response = readResponse ($conn);
+    if ( $response =~ /\* SEARCH /i ) {
+       ($dmy, $msgnum) = split(/\* SEARCH /i, $response);
+       ($msgnum) = split(/ /, $msgnum);
+    }
+
+    last if $response =~ /^1 OK/;
+    last if $response =~ /complete/i;
+   }
+
+   return $msgnum;
+}
+
 1;
