@@ -83,41 +83,6 @@ sub init {
 
 }
 
-#  getMailboxList
-#
-#  get a list of the user's mailboxes from the source host
-#
-sub getMailboxList {
-
-my $prefix = shift;
-my $conn   = shift;
-my @mbxs;
-
-   #  Get a list of the user's mailboxes
-   #
-
-   Log("Get list of user's mailboxes",2) if $debugMode;
-
-   if ( $mbxList ) {
-      foreach $mbx ( split(/,/, $mbxList) ) {
-         $mbx = $prefix . $mbx if $prefix;
-         if ( $opt_R ) {
-            # Get all submailboxes under the ones specified
-            $mbx .= '*';
-            @mailboxes = listMailboxes( $mbx, $conn);
-            push( @mbxs, @mailboxes );
-         } else {
-            push( @mbxs, $mbx );
-         }
-      }
-   } else {
-      #  Get all mailboxes
-      @mbxs = listMailboxes( '*', $conn);
-   }
-
-   return @mbxs;
-}
-
 sub processArgs {
 
    if ( !getopts( "dS:L:O:uhH" ) ) {
@@ -361,58 +326,6 @@ my $sig = shift;
       exit;
    }
    Log("Resuming");
-}
-
-sub fixup_date {
-
-my $date = shift;
-
-   #  Make sure the hrs part of the date is 2 digits.  At least
-   #  one IMAP server expects this.
-
-   $$date =~ s/^\s+//;
-   $$date =~ /(.+) (.+):(.+):(.+) (.+)/;
-   my $hrs = $2;
-   
-   return if length( $hrs ) == 2;
-
-   my $newhrs = '0' . $hrs if length( $hrs ) == 1;
-   $$date =~ s/ $hrs/ $newhrs/;
-
-}
-
-sub init_mbx {
-
-my $mbx  = shift;
-my $conn = shift;
-my @msgs;
-
-   #  Remove all messages from a mailbox
-
-   Log("Initializing mailbox $mbx");
-   getMsgList( $mbx, \@msgs, $conn, 'SELECT' ); 
-   my $msgcount = $#msgs + 1;
-   Log("$mbx has $msgcount messages");
-
-   return if $msgcount == 0;   #  No messages to delete
-
-   foreach my $msgnum ( @msgs ) {
-      ($msgnum) = split(/\|/, $msgnum);
-      deleteMsg( $msgnum, $conn );
-   }
-   expungeMbx( $mbx, $conn );
-
-}
-
-sub commafy {
-
-my $number = shift;
-
-   $_ = $$number;
-   1 while s/^([-+]?\d+)(\d{3})/$1,$2/;
-
-   $$number = $_;
-
 }
 
 sub usage {
