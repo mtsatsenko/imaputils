@@ -451,34 +451,6 @@ sub processArgs {
 
 }
 
-sub findMsg {
-
-my $msgid = shift;
-my $conn  = shift;
-my $msgnum;
-
-   # Search a mailbox on the server for a message by its msgid.
-
-   Log("   Search for $msgid") if $verbose;
-   sendCommand ( $conn, "1 SEARCH header Message-Id \"$msgid\"");
-   while (1) {
-	$response = readResponse ($conn);
-	if ( $response =~ /\* SEARCH /i ) {
-	   ($dmy, $msgnum) = split(/\* SEARCH /i, $response);
-	   ($msgnum) = split(/ /, $msgnum);
-	}
-
-	last if $response =~ /^1 OK|^1 NO|^1 BAD/;
-	last if $response =~ /complete/i;
-   }
-
-   if ( $verbose ) {
-      Log("$msgid was not found") unless $msgnum;
-   }
-
-   return $msgnum;
-}
-
 sub check_for_adds {
 
 my $source_mbxs = shift;
@@ -537,7 +509,7 @@ my @sourceMsgs;
 
            Log("Searching on dst in $dst_mbx for $msgid ($msgnum)") if $verbose;
 
-           my $dst_msgnum = findMsg( $msgid, $dst );
+           my $dst_msgnum = findMsg( $msgid, $dst, $dst_mbx);
            if ( !$dst_msgnum ) {
               #  The msg doesn't exist in the mailbox on the dst, need to add it.
               $message = fetchMsg( $msgnum, $src );
@@ -614,7 +586,7 @@ my $total_deletes=0;
               Log("   dst msgnum $dst_msgnum");
               Log("   dst_mbx    $dst_mbx");
            }
-           my $src_msgnum = findMsg( $msgid, $src );
+           my $src_msgnum = findMsg( $msgid, $src, $src_mbx);
            if ( !$src_msgnum ) {
               Log("Deleting $msgid from $dst_mbx on the dst");
               if ( deleteMsg( $dst, $dst_msgnum ) ) {
