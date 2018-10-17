@@ -990,14 +990,20 @@ my $conn  = shift;
 my $msgid = shift;
 my $mbx   = shift;
 my $msgnum;
-my $rsn = "1";
+my $noSuchMbx;
 
    Log("SELECT $mbx") if $debug;
+   &Log("Searching for $msgid in $mbx") if $debug;
    sendCommand ( $conn, "1 SELECT \"$mbx\"");
    while (1) {
     $response = readResponse ($conn);
+    if ( $response =~ /^1 NO/ ) {
+       $noSuchMbx = 1;
+       last;
+    }
     last if $response =~ /^1 OK/;
    }
+   return '' if $noSuchMbx;
 
    Log("Search for $msgid") if $debug;
    sendCommand ( $conn, "$rsn SEARCH header Message-ID \"$msgid\"");
@@ -1010,6 +1016,12 @@ my $rsn = "1";
 
     last if $response =~ /^1 OK/;
     last if $response =~ /complete/i;
+   }
+
+   if ( $msgnum ) {
+      &Log("Message exists") if $debug;
+   } else {
+      &Log("Message does not exist") if $debug;
    }
 
    return $msgnum;
