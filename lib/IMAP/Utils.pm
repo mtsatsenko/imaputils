@@ -1091,4 +1091,80 @@ local ($lenx);
    return 1;
 }
 
+sub flags {
+
+my $flags = shift;
+my @newflags;
+my $newflags;
+
+   #  Make sure the flags list contains only standard
+   #  IMAP flags.
+
+   return unless $flags;
+
+   $flags =~ s/\\Recent//i;
+   foreach $_ ( split(/\s+/, $flags) ) {
+      next unless substr($_,0,1) eq '\\';
+      push( @newflags, $_ );
+   }
+
+   $newflags = join( ' ', @newflags );
+
+   $newflags =~ s/\\Deleted//ig if $opt_r;
+   $newflags =~ s/^\s+|\s+$//g;
+
+   return $newflags;
+}
+
+sub resume {
+   my $LAST = shift;
+
+   my $src = shift;
+   my $dst = shift;
+
+   my $sourceHost = shift;
+   my $sourceUser = shift;
+   my $sourcePwd = shift;
+   my $srcMethod = shift;
+
+   my $destHost = shift;
+   my $destUser = shift;
+   my $destPwd = shift;
+   my $dstMethod = shift;
+
+   #  Disconnect, re-connect, and log back in.
+
+   Log("Fatal error, lost connection to either the source or destination");
+   # Log("checkpoint $checkpoint");
+   Log("LAST $LAST");
+   my ($mbx,$msgnum) = split(/\|/, $LAST);
+   Log("mbx $mbx");
+   Log("Disconnect from the source and destination servers");
+
+   close $src;
+   close $dst;
+
+   Log("Sleeping 15 seconds before reconnecting");
+   sleep 15;
+
+   Log("Reconnect to source server and log back in");
+   connectToHost($sourceHost, \$src)   or exit;
+   login($sourceUser,$sourcePwd, $src, $srcMethod) or exit;
+   selectMbx( $mbx, $src );
+
+   Log("Reconnect to destination server and log back in");
+   connectToHost( $destHost, \$dst ) or exit;
+   login( $destUser,$destPwd, $dst, $dstMethod ) or exit;
+   Log("Resuming");
+
+   #  Just in case we were creating a mailbox when the connection
+   #  was lost check and recreate it if necessary
+
+   Log("does $mbx exist?");
+   createMbx( $mbx, $dst ) unless mbxExists( $mbx, $dst );
+
+   return;
+
+}
+
 1;
