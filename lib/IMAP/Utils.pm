@@ -1152,17 +1152,18 @@ sub resume {
    login($sourceUser,$sourcePwd, $src, $srcMethod) or exit;
    selectMbx( $mbx, $src );
 
-   Log("Reconnect to destination server and log back in");
-   connectToHost( $destHost, \$dst ) or exit;
-   login( $destUser,$destPwd, $dst, $dstMethod ) or exit;
-   Log("Resuming");
+   if ($destHost, $destUser, $destPwd, $dstMethod) {
+      Log("Reconnect to destination server and log back in");
+      connectToHost( $destHost, \$dst ) or exit;
+      login( $destUser,$destPwd, $dst, $dstMethod ) or exit;
+      Log("Resuming");
 
-   #  Just in case we were creating a mailbox when the connection
-   #  was lost check and recreate it if necessary
+      #  Just in case we were creating a mailbox when the connection
+      #  was lost check and recreate it if necessary
 
-   Log("does $mbx exist?");
-   createMbx( $mbx, $dst ) unless mbxExists( $mbx, $dst );
-
+      Log("does $mbx exist?");
+      createMbx( $mbx, $dst ) unless mbxExists( $mbx, $dst );
+   }
    return;
 
 }
