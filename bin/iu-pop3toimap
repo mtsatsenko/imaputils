@@ -124,7 +124,7 @@ my $copied;
       $mailbox = 'INBOX' unless $mailbox;
       selectMbx( $mailbox, $i_conn );
 
-      if ( insertMsg(*msg, $mailbox, $date, $flag, $i_conn ) ) {
+      if ( insertMsg($i_conn, *msg, $mailbox, $date, $flag ) ) {
          $copied++;
          $grandTotal++;
          Log("$copied messages migrated") if $copied/100 == int($copied/100);
@@ -381,57 +381,6 @@ sub alarmHandler {
     return;
 }
 
-
-#  insertMsg
-#
-#  This routine inserts a messages into a user's IMAP INBOX
-#
-sub insertMsg {
-
-local (*message, $mbx, $date, $flag, $conn) = @_;
-local ($rsn,$lenx);
-
-   $lenx = length($message);
-   $totalBytes = $totalBytes + $lenx;
-   $totalMsgs++;
-
-   ++$rsn;
-
-   if ( $date ) {
-      ($date,$time,$offset) = split(/\s+/, $date);
-      ($hr,$min,$sec) = split(/:/, $time);
-      $hr = '0' . $hr if length($hr) == 1;
-      $date = "$date $hr:$min:$sec $offset";
-      $cmd = "$rsn APPEND \"$mbx\" $flag \"$date\" \{$lenx\}";
-   } else {
-      $cmd = "$rsn APPEND \"$mbx\" $flag \{$lenx\}";
-   }
-   $cmd =~ s/\s+/ /g;
-   sendCommand ($conn, "$cmd");
-   $response = readResponse ($conn);
-   if ( $response !~ /^\+/ ) {
-       Log ("unexpected APPEND response: $response");
-       push(@errors,"Error appending message to $mbx for $user");
-       return 0;
-   }
-
-   print $conn "$message\r\n";
-
-   undef @response;
-   while ( 1 ) {
-       $response = readResponse ($conn);
-       if ( $response =~ /^$rsn OK/i ) {
-	   last;
-       }
-       elsif ( $response !~ /^\*/ ) {
-	   Log ("unexpected APPEND response: $response");
-	   # next;
-	   return 0;
-       }
-   }
-
-   return 1;
-}
 
 #  alarmSet
 #
