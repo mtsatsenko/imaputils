@@ -545,59 +545,6 @@ my $flags;
 
 }
 
-
-#  insertMsg
-#
-#  This routine inserts an RFC822 messages into a user's folder
-#
-sub insertMsg {
-
-local ($conn, $mbx, *message, $flags, $date) = @_;
-local ($lsn,$lenx);
-
-   Log("   Inserting message") if $debug;
-   $lenx = length($message);
-   $totalBytes = $totalBytes + $lenx;
-   $totalMsgs++;
-
-   $flags = flags( $flags );
-   fixup_date( \$date );
-
-   $flags =~ s/\\Recent//i;
-
-   sendCommand ($conn, "1 APPEND \"$mbx\" ($flags) \"$date\" \{$lenx\}");
-   $response = readResponse ($conn);
-   if ($conn_timed_out) {
-       Log ("unexpected response timeout appending message");
-       push(@errors,"Error appending message to $mbx for $user");
-       return 0;
-   }
-	
-   if ( $response !~ /^\+/ ) {
-       Log ("unexpected APPEND response: >$response<");
-       # next;
-       push(@errors,"Error appending message to $mbx for $user");
-       return 0;
-   }
-
-   print $conn "$message\r\n";
-
-   undef @response;
-   while ( 1 ) {
-       $response = readResponse ($conn);
-       if ( $response =~ /^1 OK/i ) {
-	   last;
-       }
-       elsif ( $response !~ /^\*/ ) {
-	   Log ("Unexpected APPEND response: >$response<");
-	   # next;
-	   return 0;
-       }
-   }
-
-   return;
-}
-
 sub formatBytes {
 
 my $bytes = shift;
