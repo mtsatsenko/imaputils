@@ -57,7 +57,7 @@ use IMAP::Utils;
 
           foreach $_ ( @$msg ) { chop $_; $message .= "$_\r\n"; }
 
-          if ( &insertMsg($mbx, \$message, $flags, $date, 'IMAP') ) {
+          if ( &insertMsg('IMAP', $mbx, \$message, $flags, $date) ) {
              $added++;
              print STDOUT "   Added $msgid\n";
           }
@@ -160,69 +160,4 @@ local $_;
     close(FH);
 
     return wantarray ? @mail : \@mail;
-}
-
-#
-sub insertMsg {
-
-my $mbx = shift;
-my $message = shift;
-my $flags = shift;
-my $date  = shift;
-my $conn  = shift;
-my ($lsn,$lenx);
-
-   &Log("   Inserting message into mailbox $mbx") if $debug;
-   $lenx = length($$message);
-
-   #  Create the mailbox unless we have already done so
-   ++$lsn;
-   if ($destMbxs{"$mbx"} eq '') {
-        &Log("creating mailbox $mbx") if $debug;
-	&sendCommand (IMAP, "$lsn CREATE \"$mbx\"");
-	while ( 1 ) {
-	   $response = readResponse (IMAP);
-	   if ( $response =~ /^$rsn OK/i ) {
-		last;
-	   }
-	   elsif ( $response !~ /^\*/ ) {
-		if (!($response =~ /already exists|reserved mailbox name/i)) {
-			&Log ("WARNING: $response");
-		}
-		last;
-	   }
-       }
-   } 
-
-   $destMbxs{"$mbx"} = '1';
-
-   ++$lsn;
-   $flags =~ s/\\Recent//i;
-
-   # &sendCommand (IMAP, "$lsn APPEND \"$mbx\" ($flags) \"$date\" \{$lenx\}");
-   &sendCommand (IMAP, "$lsn APPEND \"$mbx\" \{$lenx\}");
-   $response = readResponse (IMAP);
-   if ( $response !~ /^\+/ ) {
-       &Log ("unexpected APPEND response: $response");
-       # next;
-       push(@errors,"Error appending message to $mbx for $user");
-       return 0;
-   }
-
-   print IMAP "$$message\r\n";
-
-   undef @response;
-   while ( 1 ) {
-       $response = readResponse (IMAP);
-       if ( $response =~ /^$lsn OK/i ) {
-	   last;
-       }
-       elsif ( $response !~ /^\*/ ) {
-	   &Log ("unexpected APPEND response: $response");
-	   # next;
-	   return 0;
-       }
-   }
-
-   return 1;
 }
