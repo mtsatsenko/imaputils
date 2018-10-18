@@ -96,51 +96,6 @@ sub init {
    $debug = 1;
 }
 
-#  insertMsg
-#
-#  This routine inserts an RFC822 messages into a user's folder
-#
-
-sub insertMsg {
-
-local ($conn, $mbx, *message, $flags, $date, $msgid) = @_;
-local ($lenx);
-
-   Log("Inserting message $msgid") if $debug;
-   $lenx = length($message);
-   $totalBytes = $totalBytes + $lenx;
-   $totalMsgs++;
-
-   $flags = flags( $flags );
-   fixup_date( \$date );
-
-   sendCommand ($conn, "1 APPEND \"$mbx\" ($flags) \"$date\" \{$lenx\}");
-   $response = readResponse ($conn);
-   if ( $response !~ /^\+/ ) {
-       Log ("unexpected APPEND response: $response");
-       # next;
-       push(@errors,"Error appending message to $mbx for $user");
-       return 0;
-   }
-
-   print $conn "$message\r\n";
-
-   undef @response;
-   while ( 1 ) {
-       $response = readResponse ($conn);
-       if ( $response =~ /^1 OK/i ) {
-	   last;
-       }
-       elsif ( $response !~ /^\*/ ) {
-	   Log ("unexpected APPEND response: $response");
-	   # next;
-	   return 0;
-       }
-   }
-
-   return 1;
-}
-
 #  getMailboxList
 #
 #  get a list of the user's mailboxes from the source host
