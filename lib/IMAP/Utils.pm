@@ -1052,6 +1052,8 @@ local ($lenx);
 
    $flags = flags( $flags );
 
+   $flags =~ s/\\Recent//i;
+
    fixup_date( \$date );
 
    sendCommand ($conn, "1 APPEND \"$mbx\" ($flags) \"$date\" \{$lenx\}");
