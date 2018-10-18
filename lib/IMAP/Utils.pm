@@ -10,7 +10,7 @@ require Exporter;
         getDelimiter @response hash trim deleteMsg isAscii createMbx 
         validate_date expungeMbx getMsgIdList getMailboxList mbxExists 
         selectMbx fetchMsg listMailboxes getMsgList fixup_date
-		exclude_mbxs findMsg);
+		exclude_mbxs findMsg insertMsg);
 
 #  Open the logFile
 #
@@ -1025,6 +1025,70 @@ my $noSuchMbx;
    }
 
    return $msgnum;
+}
+
+#  insertMsg
+#
+#  This routine inserts a message into a user's mailbox
+#
+sub insertMsg {
+
+local ($conn, $mbx, *message, $flags, $date) = @_;
+local ($lenx);
+
+   $lenx = length($message);
+
+   Log("   Inserting message") if $debug;
+   my $mb = $lenx/1000000;
+
+   if ( $max_size and $mb > $max_size ) {
+      commafy( \$lenx );
+      Log("   Skipping message because its size ($lenx) exceeds the $max_size MB limit");
+      return;
+   }
+
+   $totalBytes = $totalBytes + $lenx;
+   $totalMsgs++;
+
+   $flags = flags( $flags );
+
+   fixup_date( \$date );
+
+   sendCommand ($conn, "1 APPEND \"$mbx\" ($flags) \"$date\" \{$lenx\}");
+   $response = readResponse ($conn);
+
+   if ( $response =~ /server unavailable|connection closed/i ) {
+      resume($LAST, $src, $dst, $sourceHost, $sourceUser,  $sourcePwd, $srcMethod, $destHost, $destUser, $destPwd, $dstMethod);
+   }
+
+   if ( $response !~ /^\+/ ) {
+       Log ("1 unexpected APPEND response: >$response<");
+       if ( $response eq ''  or $response =~ /^1 NO/ ) {
+          Log("response is NULL");
+          resume($LAST, $src, $dst, $sourceHost, $sourceUser,  $sourcePwd, $srcMethod, $destHost, $destUser, $destPwd, $dstMethod);
+          next;
+       }
+       # next;
+       push(@errors,"Error appending message to $mbx for $user");
+       return 0;
+   }
+
+   print $conn "$message\r\n";
+
+   undef @response;
+   while ( 1 ) {
+       $response = readResponse ($conn);
+       if ( $response =~ /^1 OK/i ) {
+       last;
+       }
+       elsif ( $response !~ /^\*/ ) {
+       Log ("unexpected APPEND response: $response");
+       # next;
+       return 0;
+       }
+   }
+
+   return 1;
 }
 
 1;
