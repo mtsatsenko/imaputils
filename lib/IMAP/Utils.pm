@@ -10,7 +10,7 @@ require Exporter;
         getDelimiter @response hash trim deleteMsg isAscii createMbx 
         validate_date expungeMbx getMsgIdList getMailboxList mbxExists 
         selectMbx fetchMsg listMailboxes getMsgList fixup_date
-		exclude_mbxs);
+		exclude_mbxs findMsg);
 
 #  Open the logFile
 #
