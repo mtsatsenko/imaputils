@@ -1058,14 +1058,16 @@ local ($lenx);
    $response = readResponse ($conn);
 
    if ( $response =~ /server unavailable|connection closed/i ) {
-      resume($LAST, $src, $dst, $sourceHost, $sourceUser,  $sourcePwd, $srcMethod, $destHost, $destUser, $destPwd, $dstMethod);
+      #resume($LAST, $src, $dst, $sourceHost, $sourceUser,  $sourcePwd, $srcMethod, $destHost, $destUser, $destPwd, $dstMethod);
+      return 0;
    }
 
    if ( $response !~ /^\+/ ) {
        Log ("1 unexpected APPEND response: >$response<");
        if ( $response eq ''  or $response =~ /^1 NO/ ) {
           Log("response is NULL");
-          resume($LAST, $src, $dst, $sourceHost, $sourceUser,  $sourcePwd, $srcMethod, $destHost, $destUser, $destPwd, $dstMethod);
+          #resume($LAST, $src, $dst, $sourceHost, $sourceUser,  $sourcePwd, $srcMethod, $destHost, $destUser, $destPwd, $dstMethod);
+          return 0;
           next;
        }
        # next;
