@@ -446,48 +446,6 @@ my $msgs = shift;
 
 }
 
-sub namespace {
-
-my $conn      = shift;
-my $prefix    = shift;
-my $delimiter = shift;
-
-   #  Query the server with NAMESPACE so we can determine its
-   #  mailbox prefix (if any) and hierachy delimiter.
-
-   @response = ();
-   sendCommand( $conn, "1 NAMESPACE");
-   while ( 1 ) {
-      $response = readResponse( $conn );
-      if ( $response =~ /^1 OK/i ) {
-         last;
-      } elsif ( $response =~ /NO|BAD/i ) {
-         Log("Unexpected response to NAMESPACE command: $response");
-         last;
-      }
-   }
-
-   foreach $_ ( @response ) {
-      if ( /NAMESPACE/i ) {
-         my $i = index( $_, '((' );
-         my $j = index( $_, '))' );
-         my $val = substr($_,$i+2,$j-$i-3);
-         ($val) = split(/\)/, $val);
-         ($$prefix,$$delimiter) = split( / /, $val );
-         $$prefix    =~ s/"//g;
-         $$delimiter =~ s/"//g;
-         last;
-      }
-      last if /^NO|^BAD/;
-   }
- 
-   if ( $debug ) {
-      Log("prefix  $$prefix");
-      Log("delim   $$delimiter");
-   }
-
-}
-
 sub mailboxName {
 
 my $mbx    = shift;

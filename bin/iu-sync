@@ -556,68 +556,6 @@ my $total_deletes=0;
    return $total_deletes;
 }
 
-sub namespace {
-
-my $conn      = shift;
-my $prefix    = shift;
-my $delimiter = shift;
-my $mbx_delim = shift;
-my $namespace;
-
-   #  Query the server with NAMESPACE so we can determine its
-   #  mailbox prefix (if any) and hierachy delimiter.
-
-   if ( $mbx_delim ) {
-      #  The user has supplied a mbx delimiter and optionally a prefix.
-      Log("Using user-supplied mailbox hierarchy delimiter $mbx_delim");
-      ($$delimiter,$$prefix) = split(/\s+/, $mbx_delim);
-      return;
-   }
-
-   @response = ();
-   sendCommand( $conn, "1 NAMESPACE");
-   while ( 1 ) {
-      $response = readResponse( $conn );
-      if ( $response =~ /^1 OK/i ) {
-         last;
-      } elsif ( $response =~ /NO|BAD/i ) {
-         Log("Unexpected response to NAMESPACE command: $response");
-         $namespace = 0;
-         last;
-      }
-   }
-
-#  if ( !$namespace and !$opt_x ) {
-#     #  Not implemented yet.  Needs more testing
-#     #  NAMESPACE is not supported by the server so try to 
-#     #  figure out the mbx delimiter and prefix
-#     $$delimiter = get_mbx_delimiter( $conn );
-#     $$prefix    = get_mbx_prefix( $delimiter, $conn );
-#
-#     return;
-#  }
-
-   foreach $_ ( @response ) {
-      if ( /NAMESPACE/i ) {
-         my $i = index( $_, '((' );
-         my $j = index( $_, '))' );
-         my $val = substr($_,$i+2,$j-$i-3);
-         ($val) = split(/\)/, $val);
-         ($$prefix,$$delimiter) = split( / /, $val );
-         $$prefix    =~ s/"//g;
-         $$delimiter =~ s/"//g;
-         last;
-      }
-      last if /^1 NO|^1 BAD/;
-   }
- 
-   if ( $verbose ) {
-      Log("prefix  $$prefix");
-      Log("delim   $$delimiter");
-   }
-
-}
-
 sub mailboxName {
 
 my $srcmbx    = shift;
