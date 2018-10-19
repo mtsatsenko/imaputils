@@ -10,7 +10,7 @@ require Exporter;
         getDelimiter @response hash trim deleteMsg isAscii createMbx 
         validate_date expungeMbx getMsgIdList getMailboxList mbxExists 
         selectMbx fetchMsg listMailboxes getMsgList fixup_date
-		exclude_mbxs findMsg insertMsg);
+		exclude_mbxs findMsg insertMsg namespace);
 
 #  Open the logFile
 #
@@ -1170,6 +1170,75 @@ sub resume {
    }
    return;
 
+}
+
+sub namespace {
+
+my $conn      = shift;
+my $prefix    = shift;
+my $delimiter = shift;
+my $mbx_delim = shift;
+
+   #  Query the server with NAMESPACE so we can determine its
+   #  mailbox prefix (if any) and hierachy delimiter.
+
+   if ( $mbx_delim ) {
+      #  The user has supplied a mbx delimiter and optionally a prefix.
+      Log("Using user-supplied mailbox hierarchy delimiter $mbx_delim");
+      ($$delimiter,$$prefix) = split(/\s+/, $mbx_delim);
+      return;
+   }
+
+   @response = ();
+   sendCommand( $conn, "1 NAMESPACE");
+   while ( 1 ) {
+      $response = readResponse( $conn );
+      if ( $response =~ /^1 OK/i ) {
+         last;
+      } elsif ( $response =~ /^1 NO|^1 BAD|^\* BYE/i ) {
+         Log("Unexpected response to NAMESPACE command: $response");
+         last;
+      }
+   }
+
+   foreach $_ ( @response ) {
+      if ( /NAMESPACE/i ) {
+         my $i = index( $_, '((' );
+         my $j = index( $_, '))' );
+         my $val = substr($_,$i+2,$j-$i-3);
+         ($val) = split(/\)/, $val);
+         ($$prefix,$$delimiter) = split( / /, $val );
+         $$prefix    =~ s/"//g;
+         $$delimiter =~ s/"//g;
+
+         #  Experimental
+         if ( $public_mbxs ) {
+            #  Figure out the public mailbox settings
+            /\(\((.+)\)\)\s+\(\((.+)\s+\(\((.+)\)\)/;
+            $public = $3;
+            $public =~ /"(.+)"\s+"(.+)"/;
+            $src_public_prefix = $1 if $conn eq $src;
+            $src_public_delim  = $2 if $conn eq $src;
+            $dst_public_prefix = $1 if $conn eq $dst;
+            $dst_public_delim  = $2 if $conn eq $dst;
+         }
+         last;
+      }
+      last if /^1 NO|^1 BAD|^\* BYE/;
+   }
+
+   unless ( $$delimiter ) {
+      #  NAMESPACE command is not supported by the server
+      #  so we will have to figure it out another way.
+      $delim = getDelimiter( $conn );
+      $$delimiter = $delim;
+      $$prefix = '';
+   }
+
+   if ( $debug ) {
+      Log("prefix  >$$prefix<");
+      Log("delim   >$$delimiter<");
+   }
 }
 
 1;
