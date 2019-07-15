@@ -153,7 +153,6 @@ use Socket;
 use IO::Socket;
 use sigtrap;
 use FileHandle;
-require "ctime.pl";
    
    $start = time();
 
@@ -187,9 +186,6 @@ require "ctime.pl";
    $logfile = "maildir_to_imap.log" unless $logfile;
    openLog($logfile);
    Log("$0 starting");
-
-   $date = ctime(time);
-   chomp($date);
 
 }
 

@@ -249,7 +249,6 @@ sub init {
    use IO::Socket;
    use sigtrap;
    use FileHandle;
-   require "ctime.pl";
 
    $version = "1.0.3";
    if ( $ENV{OS} =~ /Windows/i ) {
@@ -320,9 +319,6 @@ sub init {
    Log("Renamed old logfile to $logfile.$ts") if $ts;
 
    #  Validate the arguments and call usage() if necessary
-
-   $date = ctime(time);
-   chomp($date);
 
 }
 
